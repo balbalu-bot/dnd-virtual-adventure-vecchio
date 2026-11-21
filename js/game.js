@@ -15,6 +15,8 @@ import { listMyCharacters, characterSummary } from "./characters.js";
 import { navigate } from "./main.js";
 import { mountTable, unmountTable, reloadTable, tableRealtime } from "./map/table.js";
 import { mountDice, unmountDice, addRoll, reloadDice } from "./dice.js";
+import { mountSheet, unmountSheet, onCharacterUpdate } from "./sheet.js";
+import { mountCombat, unmountCombat, reloadCombat, combatRealtime, refreshCombatOverlay } from "./combat.js";
 
 let root, rt, heartbeat, unsubs = [], keyHandlers = null, groupPick = new Set(), wasSubscribed = false;
 let els = {};
@@ -45,6 +47,7 @@ export async function enterGame(app, gameId) {
   subscribeRealtime(gameId);
   await loadInitial().catch((e) => toast(e.message, "error"));
   await reloadTable().catch((e) => toast("Mappa: " + e.message, "error"));
+  await reloadCombat().catch((e) => toast("Combattimento: " + e.message, "error"));
   touch();
   heartbeat = setInterval(touch, 60000);
   installKeys();
@@ -70,6 +73,8 @@ export async function leaveGameScreen() {
   unmountChat();
   unmountTable();
   unmountDice();
+  unmountSheet();
+  unmountCombat();
   root.remove(); root = null;
   document.querySelectorAll(".modal-wrap").forEach((m) => m.remove());
   store.game = null; store.me = null; store.members.clear(); store.channels.clear(); store.characters.clear();
@@ -104,7 +109,7 @@ async function reloadState() {
 
 async function resync() {
   if (!store.game) return;
-  try { await reloadState(); await catchUp(); await reloadTable(); await reloadDice(); renderHeader(); renderBanners(); } catch { /* riproverà */ }
+  try { await reloadState(); await catchUp(); await reloadTable(); await reloadDice(); await reloadCombat(); renderHeader(); renderBanners(); } catch { /* riproverà */ }
 }
 
 let hiddenAt = 0;
@@ -139,7 +144,11 @@ function subscribeRealtime(gid) {
     .on("postgres_changes", { event: "*", schema: "public", table: "maps", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.map(p))
     .on("postgres_changes", { event: "*", schema: "public", table: "tokens", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.token(p))
     .on("postgres_changes", { event: "*", schema: "public", table: "drawings", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.drawing(p))
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "map_signals", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.signal(p.new))
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "map_signals", filter: `game_id=eq.${gid}` }, (p) => { tableRealtime.signal(p.new); combatRealtime.signal(p.new); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "encounters", filter: `game_id=eq.${gid}` }, (p) => combatRealtime.encounter(p))
+    .on("postgres_changes", { event: "*", schema: "public", table: "combatants", filter: `game_id=eq.${gid}` }, (p) => { combatRealtime.combatant(p); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "combatant_stats", filter: `game_id=eq.${gid}` }, (p) => combatRealtime.stats(p))
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "characters" }, (p) => onCharacter(p.new))
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "dice_rolls", filter: `game_id=eq.${gid}` }, (p) => onRoll(p.new))
     .on("broadcast", { event: "table" }, ({ payload }) => tableRealtime.broadcast(payload))
     .subscribe((status) => {
@@ -152,6 +161,13 @@ function subscribeRealtime(gid) {
 
 function sendBroadcast(payload) {
   if (rt) rt.send({ type: "broadcast", event: "table", payload }).catch?.(() => {});
+}
+
+function onCharacter(row) {
+  if (!row?.id) return;
+  onCharacterUpdate(row);
+  combatRealtime.character(row);
+  if (store.characters.has(row.id)) { store.characters.set(row.id, { ...store.characters.get(row.id), ...row }); }
 }
 
 function onRoll(r) {
@@ -283,9 +299,9 @@ function buildLayout(app) {
     h("div", { class: "panel" },
       h("h3", { class: "panel-title", html: `${icon("users")} Il gruppo` }),
       els.members, els.groupBar),
-    h("div", { class: "panel panel-soon" },
+    h("div", { class: "panel" },
       h("h3", { class: "panel-title", html: `${icon("sword")} Iniziativa e combattimento` }),
-      h("p", { class: "muted small" }, "Ordine di iniziativa, turni, round e PF in combattimento: Fase 3.")),
+      els.combatPane = h("div", {})),
     h("div", { class: "panel" },
       h("h3", { class: "panel-title", html: `${icon("map")} Elementi sulla mappa` }),
       els.tokenList = h("div", { class: "tok-list" })),
@@ -298,15 +314,15 @@ function buildLayout(app) {
 
   els.chatPane = h("div", { class: "panel panel-chat" });
   els.dicePane = h("div", { class: "panel panel-dice", hidden: true });
+  els.sheetPane = h("div", { class: "panel panel-sheet", hidden: true });
   const rtab = (id, ic, label) => h("button", {
     class: "right-tab", dataset: { rt: id }, html: `${icon(ic)} ${label}`,
     onclick: () => setRightTab(id),
   });
   const right = h("aside", { class: "col col-right", dataset: { pane: "chat" } },
     h("div", { class: "right-tabs" },
-      rtab("chat", "chat", "Chat"), rtab("dice", "dice", "Dadi"),
-      h("span", { class: "right-tab soon", title: "Fase 3", html: `${icon("scroll")} Scheda` })),
-    els.chatPane, els.dicePane);
+      rtab("chat", "chat", "Chat"), rtab("dice", "dice", "Dadi"), rtab("sheet", "scroll", "Scheda")),
+    els.chatPane, els.dicePane, els.sheetPane);
 
   const layout = h("div", { class: "layout" }, left, center, right);
 
@@ -330,6 +346,8 @@ function buildLayout(app) {
   mountChat(els.chatPane, store.game.id);
   mountTable(els.stage, els.tokenList, { gameId: store.game.id, sendBroadcast });
   mountDice(els.dicePane, store.game.id, els.stage);
+  mountSheet(els.sheetPane);
+  mountCombat(els.combatPane, { onShowSheet: () => { setRightTab("sheet"); if (isMobile()) { root.dataset.tab = "chat"; } } });
   setRightTab(loadPref("rightTab", "chat"));
 
   renderHeader(); renderBanners(); renderMembers(); renderControls();
@@ -339,6 +357,7 @@ function setRightTab(id) {
   savePref("rightTab", id);
   els.chatPane.hidden = id !== "chat";
   els.dicePane.hidden = id !== "dice";
+  els.sheetPane.hidden = id !== "sheet";
   root.querySelectorAll(".right-tab[data-rt]").forEach((b) => b.classList.toggle("active", b.dataset.rt === id));
   if (id === "chat") clearUnread();
 }

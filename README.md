@@ -2,7 +2,7 @@
 
 Piattaforma web per giocare a Dungeons & Dragons a distanza: stanze private, ruoli DM e giocatore, chat generale, privata e di gruppo, **voce con ricetrasmittente (Push-to-Talk)**, **canali vocali privati reali** e **videochiamata**. Funziona da browser su PC, tablet, Android e iPhone, senza installare nulla, ed è pubblicata gratis su GitHub Pages.
 
-> **Stato:** Fase 1 (voce, video, chat, stanze) e **Fase 2** (mappe, token, nebbia di guerra, dadi) completate. Schede complete e combattimento arrivano nella Fase 3. L'elenco preciso di ciò che è già fatto e di ciò che manca è in [`docs/STATO-FUNZIONI.md`](docs/STATO-FUNZIONI.md). L'architettura tecnica è descritta in [`docs/ARCHITETTURA.md`](docs/ARCHITETTURA.md).
+> **Stato:** completate la Fase 1 (voce, video, chat, stanze), la **Fase 2** (mappe, token, nebbia di guerra, dadi) e la **Fase 3** (schede D&D 5e e combattimento). La Fase 4 riguarda campagne, musica, immagini ed esportazione. L'elenco preciso di ciò che è già fatto e di ciò che manca è in [`docs/STATO-FUNZIONI.md`](docs/STATO-FUNZIONI.md). L'architettura tecnica è descritta in [`docs/ARCHITETTURA.md`](docs/ARCHITETTURA.md).
 
 ---
 
@@ -144,6 +144,30 @@ La prova **6** è quella che conferma la privacy reale dei canali privati: falla
 - 📏 righello (piedi, metri, caselle; lo vedono anche gli altri) · 📍 segnala un punto · ✏️ disegna · 🅰 nota di testo.
 - **Dadi**: scheda *Dadi* a destra. Clic su un dado, oppure formula libera (`1d20+5`, `2d6+1d4+3`). Vantaggio/svantaggio, tipo di tiro, descrizione, tiro segreto. Il risultato lo decide il server e compare a tutti con l'animazione.
 
+## Aggiornamento alla Fase 3 (schede e combattimento)
+
+1. **Database**: in Supabase **SQL Editor → New query**, incolla tutto `supabase/schema-fase3.sql` e premi **Run** (*Success*).
+2. **File del sito**: su GitHub **Add file → Upload files**, trascina il contenuto dello ZIP di aggiornamento e premi **Commit changes**. Il tuo `config.js` non viene toccato.
+3. Ricarica il sito con **Cmd+Maiusc+R**.
+
+### Come si usa
+
+**Scheda** (scheda *Scheda* a destra)
+- Ogni giocatore vede e modifica la propria; il DM sceglie dall'elenco in alto quella di qualunque giocatore e può correggerla.
+- Si salva da sola mentre scrivi (in alto a destra compare *Salvato ✓*).
+- **Clic sui numeri per tirare**: modificatore di una caratteristica = prova; tiri salvezza; abilità; attacchi (*Colpire* e *Danni*, spunta *crit* per il critico); incantesimi.
+- *Normale / Vantaggio / Svantaggio* in alto vale per tutti i tiri d20.
+- Il pallino accanto alle abilità: vuoto = nessuna competenza, pieno = competente, doppio = maestria.
+- *Danno* / *Cura* aggiornano i PF (i temporanei si consumano per primi).
+
+**Combattimento** (riquadro *Iniziativa e combattimento* a sinistra; su telefono nella scheda *Gruppo*)
+- Il DM preme **Inizia combattimento**: entrano personaggi e mostri presenti sulla mappa. *+ mostro* per aggiungerne altri, *🎲 Iniz. mostri* tira l'iniziativa di tutti i mostri.
+- I giocatori premono **🎲 Iniz.** (o *Iniziativa* nella scheda): il valore entra da solo nell'ordine.
+- **Turno successivo ▶**: avanza; a fine giro aumenta il round. Chi è di turno riceve un avviso e il suo token si illumina sulla mappa.
+- PF dei mostri: il DM li vede e li modifica (✎ per PF, CA e note segrete); i giocatori vedono solo *Illeso / Ferito / Gravemente ferito / A terra*.
+- **🎯 Bersaglio**: ogni giocatore sceglie chi attacca; sulla mappa compare una freccia.
+- Nulla è automatico: colpito o mancato, danni e condizioni li decide e applica il DM.
+
 ## Limiti dei servizi gratuiti (da conoscere)
 
 **LiveKit Cloud — piano Build (gratuito)**
@@ -185,6 +209,9 @@ fonts/                     caratteri Cinzel e Alegreya Sans (licenza OFL)
 icons/                     icone dell'app
 supabase/schema.sql        database + regole di sicurezza (da incollare in Supabase)
 supabase/schema-fase2.sql  mappe, token, disegni, dadi, Storage (da incollare dopo schema.sql)
+supabase/schema-fase3.sql  schede e combattimento (da incollare dopo schema-fase2.sql)
+js/sheet.js                scheda personaggio D&D 5e
+js/combat.js               iniziativa, turni, PF, condizioni, bersagli
 js/map/                    tavolo virtuale: motore grafico, griglia, strumenti del DM
 js/dice.js                 dadi generati dal server e animazione
 supabase/functions/        le due funzioni server (token audio, moderazione DM)
@@ -197,4 +224,4 @@ Quando ti consegno una nuova versione: su GitHub **Add file → Upload files**, 
 
 ## Diritti e contenuti
 
-Progetto amatoriale non ufficiale, non affiliato a Wizards of the Coast. Nessuna illustrazione, mappa o testo protetto è incluso. Dalle fasi successive le regole useranno solo il *System Reference Document 5.1* (licenza CC BY 4.0, con attribuzione) e i contenuti caricati dagli utenti. Licenze delle librerie incluse: vedi `vendor/LICENZE.txt` e `fonts/`.
+Progetto amatoriale non ufficiale, non affiliato a Wizards of the Coast. Nessuna illustrazione, mappa o testo protetto è incluso. La scheda usa solo termini di gioco del *System Reference Document 5.1* (licenza CC BY 4.0): vedi l'attribuzione in `docs/LICENZE-SRD.md`. Licenze delle librerie incluse: vedi `vendor/LICENZE.txt` e `fonts/`.

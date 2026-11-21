@@ -71,6 +71,15 @@ export function mountDice(container, gid, stageEl) {
   return root;
 }
 
+/** Tiro dalla scheda o dal combattimento: il server genera, qui si mostra */
+export async function rollFor(expr, { label = "", type = "generic", adv = "", secret = false } = {}) {
+  try {
+    const r = await rpc("roll_dice", { p_game: gameId, p_expr: expr, p_label: label, p_type: type, p_adv: adv, p_secret: secret });
+    addRoll(r, { animate: true, mine: true });
+    return r;
+  } catch (e) { toast(e.message, "error"); return null; }
+}
+
 export function unmountDice() { root?.remove(); root = null; }
 
 async function load() {

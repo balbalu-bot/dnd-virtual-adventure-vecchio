@@ -63,13 +63,34 @@ Legenda: ✅ implementato · 🟡 parziale · ⏳ fase successiva
 | Tiri segreti del DM e tiri riservati dei giocatori | ✅ | protetti dal database |
 | Storico dei tiri e animazione | ✅ | animazione 2D dei dadi che rotolano |
 
+## Fase 3 — Regole e personaggi (consegnata)
+
+| Funzione | Stato | Note |
+|---|---|---|
+| Scheda completa: nome, ritratto, specie, classe, livello, background, allineamento, PE | ✅ | |
+| Caratteristiche con modificatori automatici, bonus di competenza dal livello | ✅ | |
+| Tiri salvezza e 18 abilità con competenza e maestria | ✅ | clic per tirare |
+| PF, PF temporanei, danni/cure rapide, CA, iniziativa, velocità, dadi vita, TS contro morte | ✅ | |
+| Attacchi: per colpire e danni dalla scheda, colpo critico, tipo di danno | ✅ | |
+| Incantesimi: caratteristica, CD e attacco automatici, slot 1°–9°, elenco con danni | ✅ | riposo lungo recupera gli slot |
+| Equipaggiamento, inventario, monete (MR, MA, ME, MO, MP) | ✅ | |
+| Condizioni (14 del SRD) e indebolimento | ✅ | |
+| Privilegi, competenze, lingue, diario personale | ✅ | |
+| Vantaggio / svantaggio per tutti i tiri d20 della scheda | ✅ | |
+| Salvataggio automatico, aggiornamento in tempo reale | ✅ | |
+| Permessi: il giocatore modifica il suo, il DM tutti quelli del tavolo | ✅ | controllo sul database |
+| Combattimento: avvio, partecipanti dalla mappa o manuali | ✅ | |
+| Iniziativa (giocatori dalla scheda, mostri in un clic, valori modificabili dal DM) | ✅ | |
+| Ordine automatico, turno attivo, turno successivo/precedente, contatore round | ✅ | notifica «È il tuo turno» |
+| PF dei mostri riservati al DM; ai giocatori solo lo stato (illeso, ferito, grave, a terra) | ✅ | protetto dal database |
+| Condizioni in combattimento, mostri nascosti nel tracker | ✅ | |
+| Bersagli con freccia sulla mappa, anello sul personaggio di turno | ✅ | |
+| Nessuna automazione arbitraria | ✅ | colpito/mancato e danni li applica il DM |
+
 ## Fasi successive
 
 | Funzione | Fase |
 |---|---|
-| Scheda D&D 5e completa (SRD 5.1), salvataggio automatico | ⏳ 3 |
-| Combattimento: iniziativa, turni, round, PF, condizioni, bersagli | ⏳ 3 |
-| Inventario, incantesimi e slot, prove di abilità e attacchi dalla scheda | ⏳ 3 |
 | Campagne e scene preparate, mostri e PNG con statistiche | ⏳ 4 |
 | Mostrare immagini a tutti, musica ed effetti sonori | ⏳ 4 |
 | Note private del DM, cronologia della campagna | ⏳ 4 |

@@ -115,6 +115,8 @@ export class MapView {
     return d[3] > 128;
   }
 
+  setCombat({ activeTokenId = null, links = [] } = {}) { this.combat = { activeTokenId, links }; this.invalidate(); }
+
   setTool(t) { this.tool = t; this.measure = null; this.draft = null; this.canvas.dataset.tool = t; this.invalidate(); }
   setDrawStyle(s) { Object.assign(this.drawStyle, s); }
   select(id) { this.selected = id; this.opts.onSelect?.(id ? this.tokens.get(id) : null); this.invalidate(); }
@@ -358,8 +360,11 @@ export class MapView {
   invalidate() { this.dirty = true; }
   loop() {
     this._raf = requestAnimationFrame(this.loop);
-    const animating = this.pings.length || this.remoteDrags.size || this.remoteMeasures.size;
+    const animating = this.pings.length || this.remoteDrags.size || this.remoteMeasures.size || this._pulse;
     if (!this.dirty && !animating) return;
+    const now = performance.now();
+    if (!this.dirty && !this.pings.length && !this.remoteDrags.size && !this.remoteMeasures.size && now - (this._lastFrame || 0) < 70) return;
+    this._lastFrame = now;
     this.dirty = false;
     try { this.render(); } catch (e) { console.error(e); }
   }
@@ -399,6 +404,7 @@ export class MapView {
       ctx.restore();
     }
     for (const t of over) this.drawToken(ctx, t);
+    this.drawCombat(ctx);
 
     // rettangolo nebbia in corso
     if (this.rectOp) {
@@ -573,6 +579,40 @@ export class MapView {
       ctx.fillStyle = "#f4e7c8"; ctx.fillText(label, pos.x, pos.y + r + 3 / s + fs * 0.15);
     }
     ctx.restore();
+  }
+
+  drawCombat(ctx) {
+    const cb = this.combat; if (!cb) return;
+    const s = this.cam.s;
+    const isDM = this.opts.isDM();
+    const visible = (t) => t && (isDM || !this.fogCanvas || t.kind === "pc" || !this.isFogged(t.x, t.y));
+    for (const [a, b] of cb.links || []) {
+      const ta = this.tokens.get(a), tb = this.tokens.get(b);
+      if (!visible(ta) || !visible(tb)) continue;
+      const pa = this.tokenPos(ta), pb = this.tokenPos(tb);
+      const ang = Math.atan2(pb.y - pa.y, pb.x - pa.x);
+      const ra = this.tokenRadius(ta), rb = this.tokenRadius(tb) + 6 / s;
+      const x1 = pa.x + Math.cos(ang) * ra, y1 = pa.y + Math.sin(ang) * ra;
+      const x2 = pb.x - Math.cos(ang) * rb, y2 = pb.y - Math.sin(ang) * rb;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,90,74,.9)"; ctx.fillStyle = "rgba(255,90,74,.9)"; ctx.lineWidth = 3 / s; ctx.setLineDash([8 / s, 5 / s]);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+      const hl = 12 / s;
+      ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - hl * Math.cos(ang - 0.45), y2 - hl * Math.sin(ang - 0.45));
+      ctx.lineTo(x2 - hl * Math.cos(ang + 0.45), y2 - hl * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    const act = this.tokens.get(cb.activeTokenId);
+    if (visible(act)) {
+      const p = this.tokenPos(act), r = this.tokenRadius(act);
+      const k = (Math.sin(performance.now() / 300) + 1) / 2;
+      ctx.save();
+      ctx.strokeStyle = `rgba(244,213,141,${0.55 + 0.45 * k})`; ctx.lineWidth = (4 + 3 * k) / s;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r + (10 + 4 * k) / s, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+      this._pulse = true;
+    } else this._pulse = false;
   }
 
   drawMeasure(ctx, a, b, color, who) {

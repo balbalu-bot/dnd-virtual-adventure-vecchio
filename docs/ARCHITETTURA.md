@@ -80,10 +80,17 @@ Operazioni sensibili come funzioni `SECURITY DEFINER` con controlli: `create_gam
 - **Immagini**: bucket Storage privato `maps`; il DM carica, i giocatori possono leggere solo l'immagine della mappa attiva (URL firmati a tempo).
 - **Nebbia**: elenco di operazioni (rivela/copri rettangoli) salvato sulla mappa e ridisegnato su ogni client. È una copertura visiva: l'immagine della mappa arriva comunque intera al browser, quindi i segreti veri vanno messi come elementi nascosti.
 
+## 7-ter. Fase 3 realizzata
+
+- **Schede**: salvate in `characters.data` (JSON). Il proprietario le modifica; il DM può modificare quelle dei personaggi collegati alla sua partita (policy `characters_update_dm`); un trigger impedisce di cambiare il proprietario. Valori derivati (modificatori, competenza, CD) calcolati nel browser; i tiri passano sempre da `roll_dice`.
+- **Combattimento**: `encounters` (uno attivo per partita, round, turno corrente), `combatants` (dati pubblici: nome, iniziativa, condizioni, stato di salute, bersaglio), `combatant_stats` (PF, CA, note: **solo DM**). Un trigger calcola lo stato di salute pubblico dai PF segreti. `next_turn` (solo DM) calcola il turno successivo e il round; `set_initiative` e `set_target` permettono ai giocatori di agire solo sul proprio personaggio.
+- **Sul tavolo**: anello pulsante sul token di turno e frecce verso i bersagli (frecce verso elementi nella nebbia non mostrate ai giocatori).
+
 ## 8. Verifiche eseguite su questa consegna
 
 - Schema SQL eseguito due volte (rieseguibile) su PostgreSQL 16 con un ambiente che simula l'autenticazione Supabase; verificati: visibilità dei messaggi generali, privati, al DM e di gruppo; esterni senza accesso; tentativi di modificare ruolo/stato, falsificare il mittente, inviare messaggi di sistema o a non-membri (tutti respinti); canali vocali invisibili ai non membri; sala d'attesa, allontanamento, trasferimento del ruolo DM.
 - Firma dei token LiveKit verificata con l'SDK ufficiale `livekit-server-sdk`.
 - Interfaccia caricata in Chrome (PC e formato smartphone) con un finto backend: nessun errore JavaScript, schermate lobby, tavolo, chat, canale privato e pannello DM controllate.
 - Fase 2: regole di visibilità di mappe, token, disegni, file e tiri verificate su PostgreSQL (giocatore che muove token altrui, token nascosti, mappe in bozza, file non attivi, tiri segreti, formule non valide, distribuzione dei d20); interfaccia del tavolo provata in Chrome con griglia quadrata ed esagonale, trascinamento con aggancio, righello, dadi.
+- Fase 3: permessi su schede e combattimento verificati su PostgreSQL (DM che corregge una scheda senza cambiarne il proprietario, giocatore che non modifica schede altrui, PF dei mostri invisibili ai giocatori, mostri nascosti, iniziativa e bersaglio solo per il proprio personaggio, ordine dei turni e cambio di round); scheda e tracker provati in Chrome con modificatori, competenze, maestria, attacchi e danni calcolati correttamente.
 - **Non ancora verificato dal vivo**: collegamento ai servizi reali Supabase/LiveKit, audio tra dispositivi diversi, Safari su iPhone. Per questo la prova del README (sezione 6) va eseguita al primo avvio.

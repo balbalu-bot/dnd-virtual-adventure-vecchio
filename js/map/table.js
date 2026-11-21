@@ -123,6 +123,7 @@ async function openMap(id, { force = false } = {}) {
   T.view.setTokens(tokens);
   T.view.setDrawings(drawings);
   renderHeader(); renderList();
+  import("../combat.js").then((m) => m.refreshCombatOverlay()).catch(() => {});
 }
 
 // ================================================================== tempo reale
