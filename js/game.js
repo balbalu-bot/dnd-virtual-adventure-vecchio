@@ -13,6 +13,8 @@ import { openDmPanel, approveMember, banMember, serverMute } from "./dm-panel.js
 import { openInviteModal } from "./lobby.js";
 import { listMyCharacters, characterSummary } from "./characters.js";
 import { navigate } from "./main.js";
+import { mountTable, unmountTable, reloadTable, tableRealtime } from "./map/table.js";
+import { mountDice, unmountDice, addRoll, reloadDice } from "./dice.js";
 
 let root, rt, heartbeat, unsubs = [], keyHandlers = null, groupPick = new Set(), wasSubscribed = false;
 let els = {};
@@ -42,6 +44,7 @@ export async function enterGame(app, gameId) {
   buildLayout(app);
   subscribeRealtime(gameId);
   await loadInitial().catch((e) => toast(e.message, "error"));
+  await reloadTable().catch((e) => toast("Mappa: " + e.message, "error"));
   touch();
   heartbeat = setInterval(touch, 60000);
   installKeys();
@@ -65,6 +68,8 @@ export async function leaveGameScreen() {
   await disconnectVoice();
   unmountVideoDock();
   unmountChat();
+  unmountTable();
+  unmountDice();
   root.remove(); root = null;
   document.querySelectorAll(".modal-wrap").forEach((m) => m.remove());
   store.game = null; store.me = null; store.members.clear(); store.channels.clear(); store.characters.clear();
@@ -99,7 +104,7 @@ async function reloadState() {
 
 async function resync() {
   if (!store.game) return;
-  try { await reloadState(); await catchUp(); renderHeader(); renderBanners(); } catch { /* riproverà */ }
+  try { await reloadState(); await catchUp(); await reloadTable(); await reloadDice(); renderHeader(); renderBanners(); } catch { /* riproverà */ }
 }
 
 let hiddenAt = 0;
@@ -131,12 +136,27 @@ function subscribeRealtime(gid) {
     .on("postgres_changes", { event: "*", schema: "public", table: "members", filter: `game_id=eq.${gid}` }, (p) => onMember(p))
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${gid}` }, (p) => onGame(p.new))
     .on("postgres_changes", { event: "*", schema: "public", table: "voice_channels", filter: `game_id=eq.${gid}` }, (p) => onChannel(p))
+    .on("postgres_changes", { event: "*", schema: "public", table: "maps", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.map(p))
+    .on("postgres_changes", { event: "*", schema: "public", table: "tokens", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.token(p))
+    .on("postgres_changes", { event: "*", schema: "public", table: "drawings", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.drawing(p))
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "map_signals", filter: `game_id=eq.${gid}` }, (p) => tableRealtime.signal(p.new))
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "dice_rolls", filter: `game_id=eq.${gid}` }, (p) => onRoll(p.new))
+    .on("broadcast", { event: "table" }, ({ payload }) => tableRealtime.broadcast(payload))
     .subscribe((status) => {
       if (!els.syncDot) return;
       els.syncDot.dataset.state = status === "SUBSCRIBED" ? "ok" : "warn";
       els.syncDot.title = status === "SUBSCRIBED" ? "Sincronizzato in tempo reale" : "Sincronizzazione in corso…";
       if (status === "SUBSCRIBED") { if (wasSubscribed) resync(); wasSubscribed = true; }
     });
+}
+
+function sendBroadcast(payload) {
+  if (rt) rt.send({ type: "broadcast", event: "table", payload }).catch?.(() => {});
+}
+
+function onRoll(r) {
+  if (!r?.id) return;
+  addRoll(r, { animate: true, mine: r.roller_id === store.user.id });
 }
 
 function onMessage(m) {
@@ -175,7 +195,9 @@ async function onMember(p) {
 function onGame(g) {
   const wasPaused = store.game?.paused;
   const dmChanged = store.game && store.game.dm_id !== g.dm_id;
+  const mapChanged = store.game && store.game.active_map_id !== g.active_map_id;
   store.game = { ...store.game, ...g };
+  if (mapChanged) tableRealtime.activeMapChanged();
   if (!wasPaused && g.paused) toast("Il DM ha messo in pausa la sessione.", "info");
   renderHeader(); renderBanners();
   if (dmChanged) { reloadState(); }
@@ -264,28 +286,27 @@ function buildLayout(app) {
     h("div", { class: "panel panel-soon" },
       h("h3", { class: "panel-title", html: `${icon("sword")} Iniziativa e combattimento` }),
       h("p", { class: "muted small" }, "Ordine di iniziativa, turni, round e PF in combattimento: Fase 3.")),
-    h("div", { class: "panel panel-soon" },
-      h("h3", { class: "panel-title", html: `${icon("map")} Strumenti mappa` }),
-      h("p", { class: "muted small" }, "Token, misurazioni, disegno, nebbia di guerra: Fase 2.")));
+    h("div", { class: "panel" },
+      h("h3", { class: "panel-title", html: `${icon("map")} Elementi sulla mappa` }),
+      els.tokenList = h("div", { class: "tok-list" })),
+    h("div", { class: "panel panel-help small muted" },
+      h("p", {}, "✋ trascina i token · rotellina o due dita per lo zoom · trascina il vuoto per spostarti · 📏 righello · 📍 segnala un punto (Alt+clic)")));
 
   els.stageChannel = h("div", { class: "stage-channel" });
   const center = h("main", { class: "col col-center", dataset: { pane: "table" } },
-    h("div", { class: "stage" },
-      els.stageChannel,
-      h("div", { class: "stage-table parchment" },
-        h("div", { class: "compass", html: compassSvg() }),
-        h("h2", { class: "title-font" }, "Il tavolo virtuale"),
-        h("p", {}, "Qui arriverà la mappa interattiva con griglia quadrata o esagonale, token di personaggi e mostri, porte, trappole, tesori e nebbia di guerra."),
-        h("p", { class: "phase-tag" }, "Fase 2 — in sviluppo"),
-        h("p", { class: "muted small" }, "Nel frattempo sono già attivi: voce generale e privata, ricetrasmittente, videochiamata, chat e gestione della stanza."))));
+    els.stage = h("div", { class: "stage" }, els.stageChannel));
 
   els.chatPane = h("div", { class: "panel panel-chat" });
+  els.dicePane = h("div", { class: "panel panel-dice", hidden: true });
+  const rtab = (id, ic, label) => h("button", {
+    class: "right-tab", dataset: { rt: id }, html: `${icon(ic)} ${label}`,
+    onclick: () => setRightTab(id),
+  });
   const right = h("aside", { class: "col col-right", dataset: { pane: "chat" } },
     h("div", { class: "right-tabs" },
-      h("span", { class: "right-tab active", html: `${icon("chat")} Chat` }),
-      h("span", { class: "right-tab soon", title: "Fase 2", html: `${icon("dice")} Dadi` }),
+      rtab("chat", "chat", "Chat"), rtab("dice", "dice", "Dadi"),
       h("span", { class: "right-tab soon", title: "Fase 3", html: `${icon("scroll")} Scheda` })),
-    els.chatPane);
+    els.chatPane, els.dicePane);
 
   const layout = h("div", { class: "layout" }, left, center, right);
 
@@ -307,8 +328,19 @@ function buildLayout(app) {
   mountVideoDock(root);
   root.insertBefore(root.querySelector(".video-dock"), layout);
   mountChat(els.chatPane, store.game.id);
+  mountTable(els.stage, els.tokenList, { gameId: store.game.id, sendBroadcast });
+  mountDice(els.dicePane, store.game.id, els.stage);
+  setRightTab(loadPref("rightTab", "chat"));
 
   renderHeader(); renderBanners(); renderMembers(); renderControls();
+}
+
+function setRightTab(id) {
+  savePref("rightTab", id);
+  els.chatPane.hidden = id !== "chat";
+  els.dicePane.hidden = id !== "dice";
+  root.querySelectorAll(".right-tab[data-rt]").forEach((b) => b.classList.toggle("active", b.dataset.rt === id));
+  if (id === "chat") clearUnread();
 }
 
 function compassSvg() {

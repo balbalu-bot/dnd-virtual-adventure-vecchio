@@ -2,7 +2,7 @@
 
 Piattaforma web per giocare a Dungeons & Dragons a distanza: stanze private, ruoli DM e giocatore, chat generale, privata e di gruppo, **voce con ricetrasmittente (Push-to-Talk)**, **canali vocali privati reali** e **videochiamata**. Funziona da browser su PC, tablet, Android e iPhone, senza installare nulla, ed è pubblicata gratis su GitHub Pages.
 
-> **Stato:** questa è la **Fase 1**. La mappa interattiva, i dadi, le schede complete e il combattimento arrivano nelle fasi successive. L'elenco preciso di ciò che è già fatto e di ciò che manca è in [`docs/STATO-FUNZIONI.md`](docs/STATO-FUNZIONI.md). L'architettura tecnica è descritta in [`docs/ARCHITETTURA.md`](docs/ARCHITETTURA.md).
+> **Stato:** Fase 1 (voce, video, chat, stanze) e **Fase 2** (mappe, token, nebbia di guerra, dadi) completate. Schede complete e combattimento arrivano nella Fase 3. L'elenco preciso di ciò che è già fatto e di ciò che manca è in [`docs/STATO-FUNZIONI.md`](docs/STATO-FUNZIONI.md). L'architettura tecnica è descritta in [`docs/ARCHITETTURA.md`](docs/ARCHITETTURA.md).
 
 ---
 
@@ -122,6 +122,28 @@ La prova **6** è quella che conferma la privacy reale dei canali privati: falla
 
 ---
 
+## Aggiornamento alla Fase 2 (mappe, token, nebbia, dadi)
+
+1. **Database** — In Supabase apri **SQL Editor → New query**, incolla tutto `supabase/schema-fase2.sql` e premi **Run**: deve comparire *Success*. Crea le tabelle di mappe, token, disegni e dadi e la cartella privata per le immagini delle mappe.
+   - Se in basso compare l'avviso *configurazione Storage non riuscita*, vai in **Storage → New bucket**, nome `maps`, **Public: disattivato**, e riesegui lo script.
+2. **File del sito** — Su GitHub **Add file → Upload files**, trascina il contenuto dello ZIP di aggiornamento (cartelle `js`, `css`, `docs`, `supabase` e i file `sw.js`, `README.md`) e premi **Commit changes**. Lo ZIP di aggiornamento **non contiene `config.js`**, così la tua configurazione resta intatta.
+3. Dopo 1–2 minuti ricarica il sito con **Cmd+Maiusc+R** (su telefono: chiudi e riapri la scheda).
+
+### Come si usa il tavolo
+
+**Il DM**
+- **Nuova mappa**: clic sul nome della mappa (in alto a sinistra del tavolo) → *Nuova mappa*. Con un'immagine tua o vuota con griglia. Scrivi quante caselle ha l'immagine in larghezza e la griglia si allinea da sola; rifinisci in *Impostazioni*.
+- Le mappe nuove sono **bozze** (le vedi solo tu): preparale in anticipo e premi **Mostra ai giocatori** quando la scena inizia.
+- **+ Elemento**: mostri, PNG, oggetti, porte, trappole, tesori, note. Doppio clic su un elemento per modificarlo. Selezionandolo compare una barra con *Nascondi/Mostra*, *Apri/Chiudi* (porte), *Attiva trappola*, *A terra*, *Blocca*, *Elimina*.
+- **Aggiungi i personaggi** (colonna sinistra): crea in un colpo il token di ogni giocatore, che potrà muovere solo il suo.
+- **Nebbia**: attivala, poi 🌤 trascina per rivelare e 🌫 per coprire. Tu la vedi semitrasparente.
+- **Nascosto** = il server non manda proprio quell'elemento ai giocatori: usalo per mostri in agguato e trappole.
+
+**Tutti**
+- ✋ trascina il tuo token (si aggancia alla griglia) · trascina il vuoto per spostare la vista · rotellina o due dita per lo zoom.
+- 📏 righello (piedi, metri, caselle; lo vedono anche gli altri) · 📍 segnala un punto · ✏️ disegna · 🅰 nota di testo.
+- **Dadi**: scheda *Dadi* a destra. Clic su un dado, oppure formula libera (`1d20+5`, `2d6+1d4+3`). Vantaggio/svantaggio, tipo di tiro, descrizione, tiro segreto. Il risultato lo decide il server e compare a tutti con l'animazione.
+
 ## Limiti dei servizi gratuiti (da conoscere)
 
 **LiveKit Cloud — piano Build (gratuito)**
@@ -162,6 +184,9 @@ vendor/                    librerie già incluse (Supabase JS, LiveKit client): 
 fonts/                     caratteri Cinzel e Alegreya Sans (licenza OFL)
 icons/                     icone dell'app
 supabase/schema.sql        database + regole di sicurezza (da incollare in Supabase)
+supabase/schema-fase2.sql  mappe, token, disegni, dadi, Storage (da incollare dopo schema.sql)
+js/map/                    tavolo virtuale: motore grafico, griglia, strumenti del DM
+js/dice.js                 dadi generati dal server e animazione
 supabase/functions/        le due funzioni server (token audio, moderazione DM)
 docs/                      architettura e stato delle funzioni
 ```

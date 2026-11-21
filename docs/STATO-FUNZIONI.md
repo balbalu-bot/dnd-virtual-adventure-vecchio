@@ -40,20 +40,37 @@ Legenda: ✅ implementato · 🟡 parziale · ⏳ fase successiva
 | Disconnessioni e riconnessioni | ✅ | automatiche per dati e audio/video |
 | Installazione come app (PWA) | ✅ | Android/PC: pulsante *Installa*; iPhone: *Aggiungi a Home* |
 
+## Fase 2 — Tavolo virtuale (consegnata)
+
+| Funzione | Stato | Note |
+|---|---|---|
+| Creare mappe vuote o da immagine propria | ✅ | immagini ridotte a max 4096 px, salvate nello Storage privato |
+| Griglia quadrata o esagonale, scala, colore, allineamento | ✅ | anteprima dal vivo mentre regoli dimensione e spostamento |
+| Più mappe per avventura, preparazione in anticipo | ✅ | una mappa è "bozza" finché il DM non preme *Mostra ai giocatori* |
+| Cambio rapido di scena | ✅ | i giocatori passano subito alla nuova mappa |
+| Token di personaggi, PNG, mostri, oggetti | ✅ | taglie da ½ a 4×4, colore, ritratto |
+| Porte (apri/chiudi, ruota), trappole (attiva/ripristina), tesori | ✅ | l'attivazione di una trappola manda un avviso a tutti |
+| Note e segnaposto, note di testo, note solo-DM | ✅ | |
+| Disegno a mano libera | ✅ | tutti possono disegnare; il DM cancella tutto, i giocatori i propri |
+| Elementi nascosti ai giocatori | ✅ | **protetti dal server**: un elemento nascosto non viene inviato ai giocatori, nemmeno quando il DM lo sposta |
+| Nebbia di guerra, rivelazione progressiva | ✅ | copertura visiva della mappa; per segreti assoluti usare *Nascondi* sugli elementi |
+| Zoom, spostamento, pizzico a due dita | ✅ | |
+| Righello (piedi, metri, caselle), regola diagonali 5e / 5-10-5 / reale | ✅ | il righello si vede anche dagli altri |
+| Segnalare un punto a tutti (ping) | ✅ | |
+| Movimento sincronizzato in tempo reale | ✅ | ogni giocatore muove solo il proprio personaggio (controllo sul server); il DM muove tutto e può bloccare un token |
+| Dadi D4–D100, multipli, modificatori, formule (es. 2d6+1d4+3) | ✅ | **generati dal server** con generatore crittografico |
+| Vantaggio / svantaggio, tipo di tiro (colpire, danni, TS, prove, iniziativa) | ✅ | |
+| Tiri segreti del DM e tiri riservati dei giocatori | ✅ | protetti dal database |
+| Storico dei tiri e animazione | ✅ | animazione 2D dei dadi che rotolano |
+
 ## Fasi successive
 
 | Funzione | Fase |
 |---|---|
-| Mappe (caricamento immagini, griglia quadrata/esagonale, scala) | ⏳ 2 |
-| Token di personaggi e mostri, movimento sincronizzato | ⏳ 2 |
-| Porte, trappole, tesori, note, disegno a mano libera | ⏳ 2 |
-| Nebbia di guerra e elementi nascosti (protetti dal server) | ⏳ 2 |
-| Zoom, spostamento visuale, misurazione distanze | ⏳ 2 |
-| Dadi D4–D100 animati, vantaggio/svantaggio, tiri segreti, storico — generati dal server | ⏳ 2 |
 | Scheda D&D 5e completa (SRD 5.1), salvataggio automatico | ⏳ 3 |
 | Combattimento: iniziativa, turni, round, PF, condizioni, bersagli | ⏳ 3 |
-| Inventario, incantesimi e slot, prove di abilità dalla scheda | ⏳ 3 |
-| Campagne e scene preparate, mostri e PNG | ⏳ 4 |
+| Inventario, incantesimi e slot, prove di abilità e attacchi dalla scheda | ⏳ 3 |
+| Campagne e scene preparate, mostri e PNG con statistiche | ⏳ 4 |
 | Mostrare immagini a tutti, musica ed effetti sonori | ⏳ 4 |
 | Note private del DM, cronologia della campagna | ⏳ 4 |
 | Esportazione / importazione JSON, conservazione messaggi configurabile | ⏳ 4 |

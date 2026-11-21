@@ -71,9 +71,19 @@ Operazioni sensibili come funzioni `SECURITY DEFINER` con controlli: `create_gam
 - **Schede e combattimento (Fase 3)**: scheda in `characters.data` (JSON con schema), permessi proprietario/DM; tabella `encounters` con iniziativa, turni e round; il DM può sempre correggere a mano.
 - **Campagne (Fase 4)**: scene preparate offline, esportazione/importazione JSON, conservazione messaggi configurabile.
 
+## 7-bis. Fase 2 realizzata
+
+- **Tabelle**: `maps` (griglia, scala, nebbia), `tokens`, `drawings`, `map_signals`, `dice_rolls`; `games.active_map_id` indica la scena visibile ai giocatori.
+- **Visibilità (RLS)**: il DM vede tutto; un giocatore vede solo la mappa attiva, i suoi elementi non nascosti e i disegni non riservati. Quando il DM nasconde o elimina un elemento, un trigger scrive un "segnale" che fa sparire l'elemento dagli schermi dei giocatori senza rivelarne la posizione.
+- **Movimento**: `move_token` (server) consente al giocatore di muovere solo il proprio token non bloccato, a sessione non in pausa. Durante il trascinamento la posizione provvisoria viaggia su un canale "broadcast" effimero (mai per elementi nascosti); a fine trascinamento viene salvata nel database.
+- **Dadi**: `roll_dice` (server) interpreta la formula, genera i numeri con `gen_random_uuid()` (generatore crittografico di PostgreSQL) senza distorsione modulo, salva il tiro; il client riceve il risultato già deciso e lo anima. Limite anti-abuso: 15 tiri ogni 10 secondi per persona.
+- **Immagini**: bucket Storage privato `maps`; il DM carica, i giocatori possono leggere solo l'immagine della mappa attiva (URL firmati a tempo).
+- **Nebbia**: elenco di operazioni (rivela/copri rettangoli) salvato sulla mappa e ridisegnato su ogni client. È una copertura visiva: l'immagine della mappa arriva comunque intera al browser, quindi i segreti veri vanno messi come elementi nascosti.
+
 ## 8. Verifiche eseguite su questa consegna
 
 - Schema SQL eseguito due volte (rieseguibile) su PostgreSQL 16 con un ambiente che simula l'autenticazione Supabase; verificati: visibilità dei messaggi generali, privati, al DM e di gruppo; esterni senza accesso; tentativi di modificare ruolo/stato, falsificare il mittente, inviare messaggi di sistema o a non-membri (tutti respinti); canali vocali invisibili ai non membri; sala d'attesa, allontanamento, trasferimento del ruolo DM.
 - Firma dei token LiveKit verificata con l'SDK ufficiale `livekit-server-sdk`.
 - Interfaccia caricata in Chrome (PC e formato smartphone) con un finto backend: nessun errore JavaScript, schermate lobby, tavolo, chat, canale privato e pannello DM controllate.
+- Fase 2: regole di visibilità di mappe, token, disegni, file e tiri verificate su PostgreSQL (giocatore che muove token altrui, token nascosti, mappe in bozza, file non attivi, tiri segreti, formule non valide, distribuzione dei d20); interfaccia del tavolo provata in Chrome con griglia quadrata ed esagonale, trascinamento con aggancio, righello, dadi.
 - **Non ancora verificato dal vivo**: collegamento ai servizi reali Supabase/LiveKit, audio tra dispositivi diversi, Safari su iPhone. Per questo la prova del README (sezione 6) va eseguita al primo avvio.

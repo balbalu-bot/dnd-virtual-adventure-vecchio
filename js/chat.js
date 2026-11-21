@@ -188,6 +188,8 @@ function scrollBottom(force) {
 function chatVisible() {
   const g = document.querySelector(".game");
   if (!g) return false;
+  const pane = document.querySelector(".panel-chat");
+  if (pane?.hidden) return false;
   if (isMobile()) return g.dataset.tab === "chat";
   return !document.hidden;
 }
