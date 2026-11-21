@@ -168,6 +168,27 @@ La prova **6** è quella che conferma la privacy reale dei canali privati: falla
 - **🎯 Bersaglio**: ogni giocatore sceglie chi attacca; sulla mappa compare una freccia.
 - Nulla è automatico: colpito o mancato, danni e condizioni li decide e applica il DM.
 
+## Aggiornamento alla Fase 4 (campagna, scene, musica, diario)
+
+1. **Database**: in Supabase **SQL Editor → New query**, incolla tutto `supabase/schema-fase4.sql` e premi **Run** (*Success*).
+2. **File del sito**: su GitHub **Add file → Upload files**, trascina il contenuto dello ZIP di aggiornamento e premi **Commit changes**. Il tuo `config.js` non viene toccato.
+3. Ricarica il sito con **Cmd+Maiusc+R** (se resta la versione vecchia, ricarica una seconda volta).
+
+### Come si usa
+
+**Strumenti DM** (pulsante in alto a destra, solo per il DM) — un'unica finestra a schede:
+- **Sala**: richieste di ingresso, codice invito, permessi (quello che prima era il Pannello DM).
+- **Scene**: prepari in anticipo una scena (mappa, musica, testo da leggere, immagine da mostrare, appunti). Con **▶ Avvia** cambia mappa e musica per tutti, pubblica il testo in chat e ti mostra gli appunti.
+- **Mostri e PNG**: il tuo bestiario (PF, CA, iniziativa, note). *Sulla mappa* li piazza nascosti; *+ combattimento* li aggiunge al tracker.
+- **Immagini**: carichi lettere, ritratti, indizi; **Mostra a tutti** li fa comparire sullo schermo dei giocatori e restano nel loro *Diario*; *Ritira* li nasconde di nuovo.
+- **Musica e suoni**: 8 atmosfere (pioggia, vento, fuoco, caverna, mare, battaglia, tensione, mistero) e 10 effetti (tuono, porta, spade, magia…), sentiti da tutti. Puoi caricare anche tuoi file audio (solo musica libera da diritti).
+- **Note private**: blocco note che vede solo il DM, salvato da solo.
+- **Campagna**: **Esporta** (file JSON di backup), **Importa** (crea una nuova partita dal file), durata dei messaggi di chat e cancellazione della chat.
+
+**Diario** (scheda *Diario* a destra, per tutti): la cronaca delle sessioni scritta insieme (*Nuova voce*) e la galleria delle immagini mostrate dal DM.
+
+**🎵** in alto: ognuno regola il proprio volume di musica ed effetti o li silenzia.
+
 ## Limiti dei servizi gratuiti (da conoscere)
 
 **LiveKit Cloud — piano Build (gratuito)**

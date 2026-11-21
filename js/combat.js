@@ -370,3 +370,14 @@ function syncMap() {
   v.setCombat?.({ activeTokenId: cur?.token_id || null, links });
 }
 export function refreshCombatOverlay() { syncMap(); }
+
+// ================================================================== usate dagli strumenti del DM
+export function activeEncounter() { return C.enc; }
+export async function addToCombat({ name, kind = "monster", token_id = null, init_bonus = 0, hidden = false, hp = 10, ac = 12 }) {
+  if (!C.enc) throw new Error("Nessun combattimento in corso: avvialo prima dal riquadro a sinistra.");
+  const r = await must(sb.from("combatants").insert({ encounter_id: C.enc.id, game_id: store.game.id, name, kind, token_id, init_bonus, hidden }).select().single());
+  C.list.set(r.id, r);
+  const s = await must(sb.from("combatant_stats").insert({ combatant_id: r.id, game_id: store.game.id, hp, hp_max: hp, ac }).select().single());
+  C.stats.set(r.id, s); render();
+  return r;
+}

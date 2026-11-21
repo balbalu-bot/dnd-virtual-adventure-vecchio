@@ -86,6 +86,13 @@ Operazioni sensibili come funzioni `SECURITY DEFINER` con controlli: `create_gam
 - **Combattimento**: `encounters` (uno attivo per partita, round, turno corrente), `combatants` (dati pubblici: nome, iniziativa, condizioni, stato di salute, bersaglio), `combatant_stats` (PF, CA, note: **solo DM**). Un trigger calcola lo stato di salute pubblico dai PF segreti. `next_turn` (solo DM) calcola il turno successivo e il round; `set_initiative` e `set_target` permettono ai giocatori di agire solo sul proprio personaggio.
 - **Sul tavolo**: anello pulsante sul token di turno e frecce verso i bersagli (frecce verso elementi nella nebbia non mostrate ai giocatori).
 
+## 7-quater. Fase 4 realizzata
+
+- **Tabelle**: `dm_notes`, `scenes`, `bestiary` (solo DM), `handouts` (visibili ai giocatori solo con `shown_at` valorizzato), `chronicle` (membri scrivono, autore o DM modificano), `audio_tracks`. Il file di un handout diventa leggibile (URL firmato) solo quando è mostrato: regola in `can_read_map_file`.
+- **Audio**: atmosfere ed effetti sintetizzati con Web Audio nel browser di ciascuno (nessun file da scaricare, nessun diritto di terzi). Lo stato della musica sta in `games.settings.music` (chi entra dopo la sente subito); gli effetti viaggiano sul canale broadcast `table`.
+- **Esporta/importa**: JSON formato `dndva-campaign` v1; l'importazione crea una nuova partita con `create_game`, rimappa tutti gli identificativi e ricarica le immagini nello Storage. I personaggi importati diventano copie del DM.
+- **Conservazione messaggi**: `purge_messages` (solo DM) usa `games.settings.retention_days`.
+
 ## 8. Verifiche eseguite su questa consegna
 
 - Schema SQL eseguito due volte (rieseguibile) su PostgreSQL 16 con un ambiente che simula l'autenticazione Supabase; verificati: visibilità dei messaggi generali, privati, al DM e di gruppo; esterni senza accesso; tentativi di modificare ruolo/stato, falsificare il mittente, inviare messaggi di sistema o a non-membri (tutti respinti); canali vocali invisibili ai non membri; sala d'attesa, allontanamento, trasferimento del ruolo DM.
@@ -93,4 +100,5 @@ Operazioni sensibili come funzioni `SECURITY DEFINER` con controlli: `create_gam
 - Interfaccia caricata in Chrome (PC e formato smartphone) con un finto backend: nessun errore JavaScript, schermate lobby, tavolo, chat, canale privato e pannello DM controllate.
 - Fase 2: regole di visibilità di mappe, token, disegni, file e tiri verificate su PostgreSQL (giocatore che muove token altrui, token nascosti, mappe in bozza, file non attivi, tiri segreti, formule non valide, distribuzione dei d20); interfaccia del tavolo provata in Chrome con griglia quadrata ed esagonale, trascinamento con aggancio, righello, dadi.
 - Fase 3: permessi su schede e combattimento verificati su PostgreSQL (DM che corregge una scheda senza cambiarne il proprietario, giocatore che non modifica schede altrui, PF dei mostri invisibili ai giocatori, mostri nascosti, iniziativa e bersaglio solo per il proprio personaggio, ordine dei turni e cambio di round); scheda e tracker provati in Chrome con modificatori, competenze, maestria, attacchi e danni calcolati correttamente.
+- Fase 4: permessi verificati su PostgreSQL (note, scene e bestiario invisibili ai giocatori; handout leggibili solo se mostrati; diario modificabile solo dall'autore o dal DM; pulizia messaggi riservata al DM); finestra Strumenti DM, Diario, handout, pannello audio ed esportazione provati in Chrome senza errori.
 - **Non ancora verificato dal vivo**: collegamento ai servizi reali Supabase/LiveKit, audio tra dispositivi diversi, Safari su iPhone. Per questo la prova del README (sezione 6) va eseguita al primo avvio.

@@ -110,7 +110,9 @@ export async function renderLobby(app, { joinCode } = {}) {
         }),
         installButton()),
       h("section", { class: "parchment card card-wide" },
-        h("h2", {}, "Le tue partite"), gamesBox)),
+        h("h2", {}, "Le tue partite"), gamesBox,
+        h("div", { class: "row-btns", style: { marginTop: ".8em" } },
+          h("button", { class: "btn btn-sm btn-ghost", html: `${icon("download")} Importa una campagna (file JSON)`, onclick: () => importDialog(nameInput) })))),
     h("footer", { class: "lobby-foot" },
       h("p", {}, "Progetto amatoriale non ufficiale, non affiliato a Wizards of the Coast. ",
         "Le regole di gioco usate nelle prossime fasi proverranno dal System Reference Document 5.1 (CC BY 4.0)."),
@@ -218,6 +220,28 @@ async function loadMyGames(box) {
   } catch (e) {
     box.replaceChildren(h("p", { class: "error" }, e.message));
   }
+}
+
+function importDialog(nameInput) {
+  if (!nameInput.value.trim()) { toast("Scrivi prima il tuo nome", "error"); nameInput.focus(); return; }
+  savePref("name", nameInput.value.trim());
+  const file = h("input", { type: "file", accept: "application/json,.json" });
+  const chars = h("input", { type: "checkbox", checked: true });
+  const prog = h("p", { class: "muted small" });
+  modal({
+    title: "Importa una campagna",
+    body: h("div", {}, h("p", {}, "Scegli un file esportato da «Strumenti DM → Campagna». Verrà creata una nuova partita di cui sarai il Dungeon Master."),
+      file, h("label", { class: "check" }, chars, " Importa anche le schede dei personaggi (come tue copie)"), prog),
+    actions: [{ label: "Annulla" }, {
+      label: "Importa", primary: true, close: false,
+      onClick: async (close) => {
+        if (!file.files[0]) { toast("Scegli il file", "error"); return false; }
+        const { importCampaign } = await import("./campaign-io.js");
+        const id = await importCampaign(file.files[0], { includeCharacters: chars.checked, onProgress: (t) => { prog.textContent = t; } });
+        close(); navigate(`#/game/${id}`);
+      },
+    }],
+  });
 }
 
 function openCreate(name) {

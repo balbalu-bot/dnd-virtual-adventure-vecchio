@@ -17,6 +17,8 @@ import { mountTable, unmountTable, reloadTable, tableRealtime } from "./map/tabl
 import { mountDice, unmountDice, addRoll, reloadDice } from "./dice.js";
 import { mountSheet, unmountSheet, onCharacterUpdate } from "./sheet.js";
 import { mountCombat, unmountCombat, reloadCombat, combatRealtime, refreshCombatOverlay } from "./combat.js";
+import { initAudio, applyMusicState, audioBroadcast, audioButton, stopAllAudio } from "./audio.js";
+import { mountChronicle, unmountChronicle, reloadChronicle, chronicleRealtime } from "./chronicle.js";
 
 let root, rt, heartbeat, unsubs = [], keyHandlers = null, groupPick = new Set(), wasSubscribed = false;
 let els = {};
@@ -48,6 +50,10 @@ export async function enterGame(app, gameId) {
   await loadInitial().catch((e) => toast(e.message, "error"));
   await reloadTable().catch((e) => toast("Mappa: " + e.message, "error"));
   await reloadCombat().catch((e) => toast("Combattimento: " + e.message, "error"));
+  reloadChronicle();
+  initAudio({ sendBroadcast });
+  applyMusicState(store.game.settings?.music);
+  if (isDM() && Number(store.game.settings?.retention_days) > 0) rpc("purge_messages", { p_game: store.game.id, p_all: false }).catch(() => {});
   touch();
   heartbeat = setInterval(touch, 60000);
   installKeys();
@@ -75,6 +81,8 @@ export async function leaveGameScreen() {
   unmountDice();
   unmountSheet();
   unmountCombat();
+  unmountChronicle();
+  stopAllAudio();
   root.remove(); root = null;
   document.querySelectorAll(".modal-wrap").forEach((m) => m.remove());
   store.game = null; store.me = null; store.members.clear(); store.channels.clear(); store.characters.clear();
@@ -109,7 +117,7 @@ async function reloadState() {
 
 async function resync() {
   if (!store.game) return;
-  try { await reloadState(); await catchUp(); await reloadTable(); await reloadDice(); await reloadCombat(); renderHeader(); renderBanners(); } catch { /* riproverà */ }
+  try { await reloadState(); await catchUp(); await reloadTable(); await reloadDice(); await reloadCombat(); await reloadChronicle(); renderHeader(); renderBanners(); } catch { /* riproverà */ }
 }
 
 let hiddenAt = 0;
@@ -150,7 +158,9 @@ function subscribeRealtime(gid) {
     .on("postgres_changes", { event: "*", schema: "public", table: "combatant_stats", filter: `game_id=eq.${gid}` }, (p) => combatRealtime.stats(p))
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "characters" }, (p) => onCharacter(p.new))
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "dice_rolls", filter: `game_id=eq.${gid}` }, (p) => onRoll(p.new))
-    .on("broadcast", { event: "table" }, ({ payload }) => tableRealtime.broadcast(payload))
+    .on("broadcast", { event: "table" }, ({ payload }) => { tableRealtime.broadcast(payload); audioBroadcast(payload); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "chronicle", filter: `game_id=eq.${gid}` }, (p) => chronicleRealtime.entry(p))
+    .on("postgres_changes", { event: "*", schema: "public", table: "handouts", filter: `game_id=eq.${gid}` }, (p) => chronicleRealtime.handout(p))
     .subscribe((status) => {
       if (!els.syncDot) return;
       els.syncDot.dataset.state = status === "SUBSCRIBED" ? "ok" : "warn";
@@ -214,6 +224,7 @@ function onGame(g) {
   const mapChanged = store.game && store.game.active_map_id !== g.active_map_id;
   store.game = { ...store.game, ...g };
   if (mapChanged) tableRealtime.activeMapChanged();
+  applyMusicState(store.game.settings?.music);
   if (!wasPaused && g.paused) toast("Il DM ha messo in pausa la sessione.", "info");
   renderHeader(); renderBanners();
   if (dmChanged) { reloadState(); }
@@ -280,7 +291,7 @@ function buildLayout(app) {
   els.syncDot = h("span", { class: "sync-dot", dataset: { state: "warn" } });
   els.voiceChip = h("span", { class: "voice-chip" });
   els.txChip = h("span", { class: "tx-chip", hidden: true, html: `${icon("radio")} IN TRASMISSIONE` });
-  els.dmBtn = h("button", { class: "btn btn-sm btn-gold", html: `${icon("crown")} <span>Pannello DM</span>`, onclick: openDmPanel });
+  els.dmBtn = h("button", { class: "btn btn-sm btn-gold", html: `${icon("crown")} <span>Strumenti DM</span>`, onclick: () => openDmPanel() });
   const topbar = h("header", { class: "topbar" },
     h("button", { class: "icon-btn", title: "Torna alla schermata iniziale", html: icon("back"), onclick: () => navigate("#/") }),
     els.title,
@@ -288,6 +299,7 @@ function buildLayout(app) {
     h("div", { class: "topbar-actions" },
       els.dmBtn,
       h("button", { class: "btn btn-sm", html: `${icon("share")} <span>Invita</span>`, onclick: () => openInviteModal(store.game) }),
+      audioButton(),
       h("button", { class: "icon-btn", title: "Impostazioni", html: icon("gear"), onclick: openSettings })));
 
   els.banners = h("div", { class: "banners" });
@@ -315,14 +327,15 @@ function buildLayout(app) {
   els.chatPane = h("div", { class: "panel panel-chat" });
   els.dicePane = h("div", { class: "panel panel-dice", hidden: true });
   els.sheetPane = h("div", { class: "panel panel-sheet", hidden: true });
+  els.chronPane = h("div", { class: "panel panel-sheet", hidden: true });
   const rtab = (id, ic, label) => h("button", {
     class: "right-tab", dataset: { rt: id }, html: `${icon(ic)} ${label}`,
     onclick: () => setRightTab(id),
   });
   const right = h("aside", { class: "col col-right", dataset: { pane: "chat" } },
     h("div", { class: "right-tabs" },
-      rtab("chat", "chat", "Chat"), rtab("dice", "dice", "Dadi"), rtab("sheet", "scroll", "Scheda")),
-    els.chatPane, els.dicePane, els.sheetPane);
+      rtab("chat", "chat", "Chat"), rtab("dice", "dice", "Dadi"), rtab("sheet", "scroll", "Scheda"), rtab("chron", "info", "Diario")),
+    els.chatPane, els.dicePane, els.sheetPane, els.chronPane);
 
   const layout = h("div", { class: "layout" }, left, center, right);
 
@@ -347,6 +360,7 @@ function buildLayout(app) {
   mountTable(els.stage, els.tokenList, { gameId: store.game.id, sendBroadcast });
   mountDice(els.dicePane, store.game.id, els.stage);
   mountSheet(els.sheetPane);
+  mountChronicle(els.chronPane);
   mountCombat(els.combatPane, { onShowSheet: () => { setRightTab("sheet"); if (isMobile()) { root.dataset.tab = "chat"; } } });
   setRightTab(loadPref("rightTab", "chat"));
 
@@ -358,6 +372,7 @@ function setRightTab(id) {
   els.chatPane.hidden = id !== "chat";
   els.dicePane.hidden = id !== "dice";
   els.sheetPane.hidden = id !== "sheet";
+  els.chronPane.hidden = id !== "chron";
   root.querySelectorAll(".right-tab[data-rt]").forEach((b) => b.classList.toggle("active", b.dataset.rt === id));
   if (id === "chat") clearUnread();
 }

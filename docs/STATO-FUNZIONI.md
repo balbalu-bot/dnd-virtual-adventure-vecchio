@@ -87,11 +87,24 @@ Legenda: ✅ implementato · 🟡 parziale · ⏳ fase successiva
 | Bersagli con freccia sulla mappa, anello sul personaggio di turno | ✅ | |
 | Nessuna automazione arbitraria | ✅ | colpito/mancato e danni li applica il DM |
 
-## Fasi successive
+## Fase 4 — Campagna e strumenti del DM (consegnata)
 
-| Funzione | Fase |
+| Funzione | Stato | Note |
+|---|---|---|
+| Scene preparate (mappa, musica, testo da leggere, immagine, appunti) e avvio con un clic | ✅ | solo il DM le vede |
+| Bestiario di mostri e PNG, piazzamento nascosto sulla mappa, invio al combattimento | ✅ | |
+| Immagini da mostrare ai giocatori (handout) con galleria nel Diario | ✅ | i giocatori ricevono il file solo dopo *Mostra a tutti* |
+| Musica d'atmosfera ed effetti sonori sincronizzati | ✅ | suoni originali generati dal browser; file propri caricabili |
+| Volume personale musica/effetti | ✅ | |
+| Note private del DM | ✅ | protette dal database |
+| Diario/cronaca della campagna scritto da tutti | ✅ | ognuno modifica le proprie voci, il DM tutte |
+| Esportazione JSON (con o senza immagini e chat) e importazione in una nuova partita | ✅ | i file audio caricati non sono inclusi |
+| Durata configurabile dei messaggi e cancellazione della chat | ✅ | pulizia all'ingresso del DM |
+
+## Possibili miglioramenti futuri (non promessi)
+
+| Funzione | Note |
 |---|---|
-| Campagne e scene preparate, mostri e PNG con statistiche | ⏳ 4 |
-| Mostrare immagini a tutti, musica ed effetti sonori | ⏳ 4 |
-| Note private del DM, cronologia della campagna | ⏳ 4 |
-| Esportazione / importazione JSON, conservazione messaggi configurabile | ⏳ 4 |
+| Visione dinamica / linea di vista dei token | oggi la nebbia è manuale |
+| Bestiario SRD precaricato | oggi i mostri si inseriscono a mano |
+| Registrazione delle sessioni | richiede servizi a pagamento |

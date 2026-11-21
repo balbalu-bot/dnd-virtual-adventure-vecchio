@@ -781,3 +781,46 @@ label.inline { flex-direction: row; align-items: center; gap: .3em; margin: 0; f
   .abil-grid { grid-template-columns: repeat(3, 1fr); }
   .attack-fields { grid-template-columns: 1fr; }
 }
+
+/* =====================================================================
+   FASE 4 — STRUMENTI DM, AUDIO, DIARIO, IMMAGINI
+   ===================================================================== */
+.modal.dmt { width: min(980px, 100%); }
+.dmt-tabs { display: flex; gap: .25em; flex-wrap: wrap; margin-bottom: .8em; border-bottom: 1px solid rgba(90,60,20,.35); padding-bottom: .5em; }
+.dmt-tab { font: inherit; font-weight: 700; font-size: .85rem; display: inline-flex; gap: .35em; align-items: center; padding: .4em .7em; border-radius: 8px; border: 1px solid #a07c45; background: rgba(255,255,255,.35); color: var(--ink); cursor: pointer; }
+.dmt-tab.active { background: linear-gradient(180deg, var(--gold-2), var(--gold)); border-color: #8a5a1c; }
+.dmt-body { min-height: 300px; }
+.pre { white-space: pre-wrap; }
+.amb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .35em; margin-bottom: .6em; }
+.audio-panel h3 { margin-top: .8em; }
+.audio-btn { font-size: 1.05rem; }
+.audio-btn.playing { color: var(--gold-2); animation: blink 2s ease-in-out infinite; }
+.audio-pop { position: fixed; z-index: 95; width: 280px; padding: .8em; border-radius: 10px; background: var(--stone-2); border: 2px solid var(--bronze); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .4em; }
+.audio-pop label { margin: 0; color: var(--text); }
+.ho-thumb { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #a07c45; background: #0003; }
+.handout-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(5,3,1,.85); display: grid; place-items: center; padding: 1em; animation: fade .3s; }
+.handout-frame { margin: 0; max-width: min(1100px, 100%); max-height: 100%; display: flex; flex-direction: column; align-items: center; gap: .6em; padding: .8em; border-radius: 12px; background: linear-gradient(180deg, var(--parch), var(--parch-2)); border: 3px solid #8a5a1c; box-shadow: 0 20px 60px rgba(0,0,0,.7); }
+.handout-frame img { max-width: 100%; max-height: calc(100dvh - 9em); object-fit: contain; border-radius: 6px; }
+.handout-frame figcaption { font-family: var(--title); font-weight: 700; color: var(--ink); font-size: 1.1rem; }
+.chronicle { display: flex; flex-direction: column; gap: .5em; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: .4em; }
+.gal-item { font: inherit; font-size: .72rem; color: var(--muted); background: rgba(0,0,0,.2); border: 1px solid #3a2d21; border-radius: 8px; padding: .25em; cursor: pointer; display: flex; flex-direction: column; gap: .2em; }
+.gal-item img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 5px; background: #0003; }
+.gal-item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chron-list { display: flex; flex-direction: column; gap: .5em; }
+.chron { border: 1px solid #3a2d21; border-radius: 9px; padding: .55em .7em; background: rgba(255,255,255,.03); }
+.chron-head { display: flex; gap: .5em; align-items: center; flex-wrap: wrap; margin-bottom: .3em; }
+.chron-head .mini { margin-left: auto; }
+.chron-body { white-space: pre-wrap; line-height: 1.5; }
+.notes-wrap { display: grid; grid-template-columns: 220px 1fr; gap: .8em; min-height: 380px; }
+.notes-list { display: flex; flex-direction: column; gap: .3em; border-right: 1px solid rgba(90,60,20,.3); padding-right: .6em; }
+.note-item { font: inherit; text-align: left; padding: .4em .5em; border-radius: 7px; border: 1px solid transparent; background: transparent; color: var(--ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note-item.active { background: rgba(255,255,255,.45); border-color: #a07c45; font-weight: 700; }
+.notes-editor { display: flex; flex-direction: column; gap: .5em; }
+.notes-editor textarea { flex: 1; min-height: 300px; }
+@media (max-width: 899px) {
+  .notes-wrap { grid-template-columns: 1fr; }
+  .notes-list { border-right: 0; padding-right: 0; flex-direction: row; flex-wrap: wrap; }
+  .dmt-tab span { display: none; }
+  .dmt-tab { padding: .45em .55em; }
+}

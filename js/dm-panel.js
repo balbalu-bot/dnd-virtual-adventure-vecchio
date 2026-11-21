@@ -30,7 +30,9 @@ export async function serverMute(userId) {
   } catch (e) { toast(e.message, "error"); }
 }
 
-export function openDmPanel() {
+export function openDmPanel(tab) { import("./dm-tools.js").then((m) => m.openDmTools(tab)); }
+
+export function roomBody() {
   const g = store.game;
   const members = [...store.members.values()];
   const pending = members.filter((m) => m.status === "pending");
@@ -44,10 +46,7 @@ export function openDmPanel() {
 
   const name = h("input", { value: g.name, maxlength: 80 });
 
-  modal({
-    title: "Pannello del Dungeon Master",
-    wide: true,
-    body: h("div", { class: "dm-panel" },
+  return h("div", { class: "dm-panel" },
       h("section", {},
         h("h3", { html: `${icon("door")} Stanza` }),
         h("div", { class: "row-btns" },
@@ -98,13 +97,6 @@ export function openDmPanel() {
         banned.map((m) => h("div", { class: "dm-row" }, h("strong", {}, m.display_name),
           h("button", { class: "btn btn-sm", onclick: async (e) => { await approveMember(m.user_id); e.target.closest(".dm-row").remove(); } }, "Riammetti")))) : null,
 
-      h("section", { class: "roadmap" },
-        h("h3", { html: `${icon("scroll")} Strumenti in arrivo` }),
-        h("ul", {},
-          h("li", {}, h("b", {}, "Fase 2 — "), "mappe, griglia quadrata/esagonale, token, nebbia di guerra, porte e trappole, dadi verificati dal server e tiri segreti."),
-          h("li", {}, h("b", {}, "Fase 3 — "), "schede complete, combattimento con iniziativa e turni, mostri e PNG."),
-          h("li", {}, h("b", {}, "Fase 4 — "), "campagne e scene preparate, immagini a tutti, musica ed effetti, note private, esportazione/importazione JSON."))),
-
       h("section", { class: "danger-zone" },
         h("h3", {}, "Zona pericolosa"),
         h("button", {
@@ -116,7 +108,5 @@ export function openDmPanel() {
             document.querySelector(".modal-wrap")?.remove();
             navigate("#/");
           },
-        }, "Elimina partita"))),
-    actions: [{ label: "Chiudi", primary: true }],
-  });
+        }, "Elimina partita")));
 }
