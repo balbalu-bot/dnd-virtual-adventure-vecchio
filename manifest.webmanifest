@@ -1,0 +1,17 @@
+{
+  "name": "D&D Virtual Adventure",
+  "short_name": "D&D VA",
+  "description": "Tavolo virtuale multiplayer per Dungeons & Dragons con voce, ricetrasmittente e video",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14100c",
+  "theme_color": "#14100c",
+  "lang": "it",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

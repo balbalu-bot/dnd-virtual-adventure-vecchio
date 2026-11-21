@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14100c">
+  <meta name="description" content="D&D Virtual Adventure — tavolo virtuale multiplayer con voce, ricetrasmittente e video">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="D&D VA">
+  <title>D&amp;D Virtual Adventure</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="config.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="boot">
+      <div class="boot-crest"></div>
+      <p>Apertura delle porte del dungeon…</p>
+    </div>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="audio-sink" hidden></div>
+  <noscript>Per usare D&amp;D Virtual Adventure devi attivare JavaScript.</noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
