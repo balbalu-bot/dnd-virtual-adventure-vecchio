@@ -8,6 +8,6 @@
 //  quelle vanno solo nei "Secrets" delle Edge Functions di Supabase.
 // =====================================================================
 window.DND_CONFIG = {
-  SUPABASE_URL: "https://INCOLLA-QUI-IL-TUO-PROGETTO.supabase.co",
-  SUPABASE_KEY: "INCOLLA-QUI-LA-CHIAVE-PUBBLICA",
+  SUPABASE_URL: "https://iorzwlodowfixktsjxgb.supabase.co",
+  SUPABASE_KEY: "sb_publishable_84nKpezfdd1O9WcSjVM5Cg_b_SgWle-",
 };
