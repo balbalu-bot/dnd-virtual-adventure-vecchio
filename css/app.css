@@ -606,8 +606,9 @@ input[type=range] { accent-color: var(--gold); width: 100%; }
 .die-btn:hover { transform: scale(1.1) rotate(-6deg); }
 .die-btn:active { transform: scale(.95); }
 .die { width: 100%; height: 100%; display: block; }
-.die .die-shape > * { fill: url(#none); fill: #3b2a1b; stroke: var(--gold); stroke-width: 4; stroke-linejoin: round; }
-.die text { fill: var(--gold-2); font-family: var(--title); font-weight: 700; font-size: 26px; }
+.die .die-shape > * { fill: var(--die-body, #3b2a1b); stroke: var(--die-edge, var(--gold)); stroke-width: 4; stroke-linejoin: round; }
+.die .die-shape path { fill: none; }
+.die text { fill: var(--die-text, var(--gold-2)); font-family: var(--title); font-weight: 700; font-size: 26px; }
 .dice-row { display: flex; gap: .4em; align-items: center; }
 .dice-row select, .dice-row input { padding: .35em .5em; font-size: .9rem; }
 .dice-row select { width: auto; }
@@ -824,3 +825,34 @@ label.inline { flex-direction: row; align-items: center; gap: .3em; margin: 0; f
   .dmt-tab span { display: none; }
   .dmt-tab { padding: .45em .55em; }
 }
+
+/* ---------------------------------------------------------- mappa a tutto schermo */
+body.map-full .stage { position: fixed; z-index: 50; left: 0; right: 0; top: 0; bottom: var(--cbh, 0px); padding: .5em; padding-top: max(.5em, env(safe-area-inset-top)); background: var(--stone, #1a130d); }
+body.map-full .controlbar { position: fixed; z-index: 51; left: 0; right: 0; bottom: 0; }
+body.map-full .stage .map-wrap { min-height: 0; }
+body.map-full .stage-channel { padding-top: .2em; padding-bottom: .2em; font-size: .85rem; }
+.tool.on { background: var(--gold); color: #1a1208; }
+/* ---------------------------------------------------------- movimento, ostacoli, posizionamento */
+.place-banner { position: absolute; z-index: 6; left: 50%; top: .6em; transform: translateX(-50%); display: flex; gap: .6em; align-items: center; padding: .5em .8em; border-radius: 10px; background: rgba(20,40,55,.95); border: 2px solid #7fd6ff; color: #e6f7ff; box-shadow: var(--shadow); max-width: calc(100% - 1.2em); animation: fade .2s; }
+.place-banner svg { width: 18px; height: 18px; vertical-align: -3px; margin-right: .3em; }
+.map-canvas[data-tool=pick], .map-canvas[data-tool=block] { cursor: crosshair; }
+.art-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: .35em; max-height: 190px; overflow: auto; padding: .3em; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.2); margin-bottom: .5em; }
+.art-pick { padding: 0; border: 2px solid transparent; border-radius: 50%; background: #1a120c; aspect-ratio: 1; cursor: pointer; overflow: hidden; }
+.art-pick:hover, .art-pick:focus-visible { border-color: var(--gold); }
+.art-pick img { width: 100%; height: 100%; display: block; }
+.tok-preview img { border-radius: 50%; }
+.srd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: .5em; max-height: 60vh; overflow: auto; }
+.srd-card { display: flex; flex-direction: column; align-items: center; gap: .2em; padding: .5em .3em; border-radius: 10px; border: 2px solid var(--line); background: rgba(0,0,0,.2); color: var(--text); cursor: pointer; font: inherit; text-align: center; }
+.srd-card img { width: 76px; height: 76px; border-radius: 50%; border: 3px solid #6a2a1a; }
+.srd-card.on { border-color: var(--gold); background: rgba(212,162,76,.16); box-shadow: 0 0 0 1px var(--bronze); }
+.srd-card strong { font-size: .9rem; line-height: 1.1; }
+.audio-unlock { position: fixed; z-index: 120; left: 50%; bottom: calc(var(--cbh, 80px) + 14px); transform: translateX(-50%); padding: .7em 1.1em; border-radius: 999px; border: 2px solid var(--gold); background: #2a1d10; color: #f4e7c8; font: inherit; font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,.6); cursor: pointer; animation: pulse-gold 1.6s ease-in-out infinite; max-width: calc(100vw - 2em); }
+@keyframes pulse-gold { 0%,100% { box-shadow: 0 0 0 0 rgba(212,162,76,.6), 0 6px 24px rgba(0,0,0,.6); } 50% { box-shadow: 0 0 0 10px rgba(212,162,76,0), 0 6px 24px rgba(0,0,0,.6); } }
+/* ---------------------------------------------------------- guida */
+.lobby-tools { display: flex; justify-content: flex-end; gap: .5em; margin-bottom: .5em; }
+.guide-steps { padding-left: 1.3em; margin: .3em 0 1em; }
+.guide-steps li { margin-bottom: .45em; }
+.gloss { margin: .6em 0 0; max-height: 58vh; overflow: auto; padding-right: .3em; }
+.gloss-item { padding: .45em 0; border-bottom: 1px solid rgba(90,60,20,.25); }
+.gloss dt { font-weight: 700; font-family: var(--title); }
+.gloss dd { margin: .15em 0 0; }

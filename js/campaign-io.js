@@ -108,7 +108,7 @@ export async function importCampaign(file, { includeCharacters = true, onProgres
     const row = strip(m, "_image", "id"); row.id = newId(m.id); row.game_id = gid; row.image_path = image_path;
     await must(sb.from("maps").insert(row));
   }
-  const toks = (j.tokens || []).map((t) => ({ ...strip(t, "_owner_name", "id", "owner_id"), id: newId(t.id), map_id: ids.get(t.map_id), game_id: gid, owner_id: null })).filter((t) => t.map_id);
+  const toks = (j.tokens || []).map((t) => ({ ...strip(t, "_owner_name", "id", "owner_id", "move_used", "move_window"), id: newId(t.id), map_id: ids.get(t.map_id), game_id: gid, owner_id: null })).filter((t) => t.map_id);
   for (let i = 0; i < toks.length; i += 200) await must(sb.from("tokens").insert(toks.slice(i, i + 200)));
   const draws = (j.drawings || []).map((d) => ({ ...strip(d, "id"), map_id: ids.get(d.map_id), game_id: gid })).filter((d) => d.map_id);
   for (let i = 0; i < draws.length; i += 200) await must(sb.from("drawings").insert(draws.slice(i, i + 200)));

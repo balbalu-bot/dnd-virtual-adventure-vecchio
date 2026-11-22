@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs>
+<radialGradient id="bg" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#2a3030"/><stop offset="1" stop-color="#060808"/></radialGradient>
+<radialGradient id="vig" cx="50%" cy="45%" r="62%"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></radialGradient>
+<radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6b0"/><stop offset=".45" stop-color="#ffcc33"/><stop offset="1" stop-color="#ff7a00" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowR" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe0d0"/><stop offset=".4" stop-color="#ff3b1f"/><stop offset="1" stop-color="#7a0000" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowB" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e8fbff"/><stop offset=".45" stop-color="#5fd3ff"/><stop offset="1" stop-color="#0050a0" stop-opacity="0"/></radialGradient>
+<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+
+</defs>
+<rect width="200" height="200" fill="url(#bg)"/>
+<path d="M10 200 C14 150 30 120 52 112 C60 80 84 66 104 72 C126 62 150 82 152 108 C176 116 190 150 190 200 Z" fill="#6a7072"/>
+<path d="M10 200 C14 150 30 120 52 112 C60 80 84 66 104 72 C126 62 150 82 152 108 C176 116 190 150 190 200 Z" fill="url(#shade)"/>
+<ellipse cx="84" cy="98" rx="18" ry="9" fill="#fff" opacity=".22"/><circle cx="60" cy="150" r="8" fill="#9aa2a4" opacity=".6"/><circle cx="140" cy="140" r="10" fill="#9aa2a4" opacity=".6"/><circle cx="110" cy="170" r="6" fill="#9aa2a4" opacity=".6"/><circle cx="80" cy="180" r="5" fill="#9aa2a4" opacity=".6"/><circle cx="150" cy="176" r="7" fill="#9aa2a4" opacity=".6"/><circle cx="100" cy="120" r="5" fill="#9aa2a4" opacity=".6"/><path d="M40 200 L44 186 L48 200 M156 200 L160 184 L164 200" fill="#4a5052"/><circle cx="74" cy="138" r="9" fill="#ccd84a" opacity=".85"/><circle cx="74" cy="138" r="4" fill="#1a1a08"/><path d="M120 120 C126 110 140 112 140 124" stroke="#3a4042" stroke-width="3" fill="none"/>
+<rect width="200" height="200" fill="url(#vig)"/>
+</svg>

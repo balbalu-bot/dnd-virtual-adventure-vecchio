@@ -101,10 +101,24 @@ Legenda: ✅ implementato · 🟡 parziale · ⏳ fase successiva
 | Esportazione JSON (con o senza immagini e chat) e importazione in una nuova partita | ✅ | i file audio caricati non sono inclusi |
 | Durata configurabile dei messaggi e cancellazione della chat | ✅ | pulizia all'ingresso del DM |
 
+## Aggiornamento "movimento, mostri e opzioni" (consegnato)
+
+| Funzione | Stato | Note |
+|---|---|---|
+| Solo il DM muove mostri, PNG e oggetti | ✅ | controllo nel database (`move_token`) |
+| Il DM sceglie dove compare un giocatore prima di ammetterlo | ✅ | |
+| Movimento limitato dalla velocità, area raggiungibile e percorso visibili | ✅ | in combattimento solo nel proprio turno; fuori, velocità ogni 6 s |
+| Ostacoli / caselle non calpestabili | ✅ | verificati dal server lungo tutto il percorso |
+| Mostri SRD pronti con statistiche e illustrazioni originali | ✅ | 23 creature |
+| Sblocco dell'audio per i giocatori, suono anche con iPhone in silenzioso | ✅ | da provare dal vivo su iPhone |
+| Effetti sonori rifatti | ✅ | generati dal browser |
+| Opzioni: tema medievale/classico/moderno, chiaro/scuro, dadi 2D/3D con colori | ✅ | per dispositivo |
+| Guida in app e glossario dei termini | ✅ | anche in `docs/GLOSSARIO.md` |
+
 ## Possibili miglioramenti futuri (non promessi)
 
 | Funzione | Note |
 |---|---|
 | Visione dinamica / linea di vista dei token | oggi la nebbia è manuale |
-| Bestiario SRD precaricato | oggi i mostri si inseriscono a mano |
+| Porte che bloccano il passaggio da sole | oggi si segnano le caselle come ostacolo |
 | Registrazione delle sessioni | richiede servizi a pagamento |

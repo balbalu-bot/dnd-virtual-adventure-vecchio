@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs>
+<radialGradient id="bg" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#2e3524"/><stop offset="1" stop-color="#0a0c06"/></radialGradient>
+<radialGradient id="vig" cx="50%" cy="45%" r="62%"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></radialGradient>
+<radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6b0"/><stop offset=".45" stop-color="#ffcc33"/><stop offset="1" stop-color="#ff7a00" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowR" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe0d0"/><stop offset=".4" stop-color="#ff3b1f"/><stop offset="1" stop-color="#7a0000" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowB" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e8fbff"/><stop offset=".45" stop-color="#5fd3ff"/><stop offset="1" stop-color="#0050a0" stop-opacity="0"/></radialGradient>
+<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+
+</defs>
+<rect width="200" height="200" fill="url(#bg)"/>
+
+<path d="M18 200 C22 160 55 145 100 145 C145 145 178 160 182 200 Z" fill="#4a4434"/>
+<path d="M18 200 C22 160 55 145 100 145 C145 145 178 160 182 200 Z" fill="url(#shade)"/>
+
+<path d="M58 92 C56 52 76 34 100 34 C124 34 144 52 142 92 C142 120 126 150 100 152 C74 150 58 120 58 92 Z" fill="#8a9a68"/>
+<path d="M58 92 C56 52 76 34 100 34 C124 34 144 52 142 92 C142 120 126 150 100 152 C74 150 58 120 58 92 Z" fill="url(#shade)"/>
+<path d="M62 60 C66 36 90 30 104 32 C124 30 140 44 140 62 C130 50 120 46 112 50 L106 40 L98 52 L88 42 L80 54 Z" fill="#2c2418"/><ellipse cx="82" cy="88" rx="11" ry="9" fill="#2a2a1a"/><ellipse cx="118" cy="90" rx="9" ry="7" fill="#2a2a1a"/><circle cx="82" cy="89" r="4" fill="#d8e0a0"/><circle cx="118" cy="91" r="3" fill="#d8e0a0"/><path d="M94 102 L100 116 L104 102" fill="#4e5a36"/><path d="M76 128 C90 122 112 126 124 132 L120 144 C104 150 88 146 78 140 Z" fill="#1c0e08"/><path d="M84 128 L86 136 L90 129 M106 130 L107 138 L111 131" fill="#c8bf98"/><path d="M118 50 L128 70 L120 74 M64 108 L74 116" stroke="#6a1a10" stroke-width="3" fill="none"/><path d="M62 70 C70 60 80 64 84 58 M120 62 C128 60 136 66 140 74" stroke="#2c3420" stroke-width="3" fill="none"/><path d="M40 176 L56 192 L44 200 M150 170 L160 190" stroke="#2a2418" stroke-width="4" fill="none"/>
+<rect width="200" height="200" fill="url(#vig)"/>
+</svg>

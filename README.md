@@ -187,7 +187,43 @@ La prova **6** è quella che conferma la privacy reale dei canali privati: falla
 
 **Diario** (scheda *Diario* a destra, per tutti): la cronaca delle sessioni scritta insieme (*Nuova voce*) e la galleria delle immagini mostrate dal DM.
 
+**Mappa a tutto schermo**: pulsante con il riquadro in alto a destra sulla mappa (o tasto **F**). Si esce con lo stesso pulsante, **F** o **Esc**. La barra della voce resta visibile in basso. Su iPhone la barra di Safari rimane (Apple non permette di nasconderla); su PC, Android e iPad sparisce anche quella.
+
 **🎵** in alto: ognuno regola il proprio volume di musica ed effetti o li silenzia.
+
+## Aggiornamento "movimento, mostri e opzioni"
+
+1. **Database**: in Supabase **SQL Editor → New query**, incolla tutto `supabase/schema-fase5.sql` e premi **Run** (*Success*). Serve: senza questo passaggio i giocatori non riescono a muovere il personaggio.
+2. **File del sito**: su GitHub **Add file → Upload files**, trascina il contenuto dello ZIP (cartelle `js`, `css`, `img`, `docs`, `supabase` comprese) e premi **Commit changes**. Il tuo `config.js` non viene toccato.
+3. Ricarica il sito con **Cmd+Maiusc+R** (se resta la versione vecchia, ricarica una seconda volta). Fatelo anche i giocatori.
+
+### Cosa cambia
+
+**Movimento**
+- I giocatori muovono **solo il proprio personaggio**. Mostri, PNG, porte e oggetti li muove solo il DM (il controllo è fatto dal database, non solo dalla pagina).
+- Ogni personaggio ha una **velocità** (dalla scheda, campo *Velocità*; se manca 9 m = 6 caselle). Toccando il proprio personaggio le **caselle verdi** mostrano dove può arrivare; trascinando compaiono il percorso e le caselle che restano.
+- **In combattimento** ci si muove solo nel proprio turno, fino alla propria velocità; al turno successivo il movimento si ricarica.
+- **Fuori combattimento** si può percorrere la propria velocità ogni 6 secondi (un round di D&D).
+- Il DM può cambiare la velocità di un token: doppio clic sul token → *Velocità in metri*.
+
+**Ostacoli (hitbox)**: strumento **🧱** nella barra della mappa (solo DM). Tocca o trascina sulle caselle: quelle rosse sono muri o zone non calpestabili. Ripassa per toglierle; *Togli tutti* le cancella. I personaggi dei giocatori non possono entrarci né passarci attraverso, nemmeno in diagonale tra due ostacoli.
+
+**Ingresso dei giocatori**: quando qualcuno chiede di entrare il pulsante è **Ammetti e posiziona**: tocca sulla mappa la casella dove comparirà il suo personaggio e solo allora entra. Con *Annulla* resta in attesa.
+
+**Mostri più realistici**
+- Strumenti DM → Mostri e PNG → **📖 Aggiungi dal manuale (SRD)**: 23 mostri e PNG con statistiche ufficiali SRD 5.1 (PF, CA, velocità, caratteristiche, attacchi, capacità, grado di sfida) e illustrazione.
+- Ogni token può avere un'**illustrazione pronta** o un'immagine tua (Elemento → Illustrazione pronta).
+
+**Musica ed effetti**
+- Il problema per cui li sentiva solo il DM: i browser fanno partire l'audio solo dopo un tocco della persona. Ora, se l'audio è bloccato, compare un pulsante dorato **«tocca qui per sentirli»**. Su iPhone il suono esce anche con l'interruttore del silenzioso attivo.
+- Gli effetti sono stati rifatti perché somiglino al loro nome (tuono che rimbomba, porta che cigola e sbatte, spade che si scontrano, campana vera, ruggito, monete, fanfara…).
+
+**Opzioni** (pulsante con i cursori in alto, anche nella schermata iniziale)
+- Stile dell'interfaccia: **Medievale**, **Classico**, **Moderno**; ognuno **Chiaro** o **Scuro**.
+- Dadi **2D** o **3D** (rotolano davvero) e colore: bronzo, rubino, smeraldo, zaffiro, ametista, ossidiana, avorio, ghiaccio.
+- Valgono solo sul tuo dispositivo: ognuno sceglie il suo.
+
+**Guida e glossario**: pulsante **?** in alto. *Come si gioca* (giocatori e DM) e *Glossario dei termini* con ricerca: CA, CD, PF, vantaggio, tiro salvezza, iniziativa, PTT, nebbia, ostacoli… L'elenco completo è anche in `docs/GLOSSARIO.md`.
 
 ## Limiti dei servizi gratuiti (da conoscere)
 

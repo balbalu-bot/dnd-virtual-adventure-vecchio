@@ -1,3 +1,4 @@
+import "./options.js";
 // Avvio dell'app e navigazione tra le schermate
 import { configured, ensureSession, sb } from "./supabase.js";
 import { h } from "./ui.js";

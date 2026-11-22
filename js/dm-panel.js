@@ -9,9 +9,19 @@ async function updateGame(patch) {
   await must(sb.from("games").update(patch).eq("id", store.game.id));
 }
 
+/**
+ * Prima di ammettere un giocatore il DM sceglie sulla mappa dove comparirà il
+ * suo personaggio. Restituisce true se è stato ammesso.
+ */
 export async function approveMember(userId) {
+  const m = store.members.get(userId);
+  if (!m) return false;
+  const { placePlayer } = await import("./map/table.js");
+  const r = await placePlayer(m);
+  if (r === "cancel") { toast("Ingresso in sospeso: il giocatore aspetta ancora.", "info"); return false; }
   await rpc("set_member_status", { p_game: store.game.id, p_user: userId, p_status: "active" });
-  toast("Partecipante ammesso", "ok");
+  toast(r === "placed" ? `${m.display_name} è entrato ed è sulla mappa` : `${m.display_name} è entrato (nessuna mappa attiva: aggiungerai il personaggio dopo)`, "ok");
+  return true;
 }
 
 export async function banMember(userId) {
@@ -71,7 +81,7 @@ export function roomBody() {
         h("h3", { html: `${icon("hourglass")} Richieste di ingresso` }),
         pending.map((m) => h("div", { class: "dm-row" }, h("strong", {}, m.display_name), h("span", { class: "muted" }, m.character_name),
           h("div", { class: "row-btns" },
-            h("button", { class: "btn btn-sm btn-primary", onclick: async (e) => { await approveMember(m.user_id); e.target.closest(".dm-row").remove(); } }, "Ammetti"),
+            h("button", { class: "btn btn-sm btn-primary", onclick: async (e) => { const row = e.target.closest(".dm-row"); if (await approveMember(m.user_id)) row?.remove(); } }, "Ammetti e posiziona"),
             h("button", { class: "btn btn-sm btn-danger", onclick: async (e) => { await rpc("reject_member", { p_game: g.id, p_user: m.user_id }); e.target.closest(".dm-row").remove(); } }, "Rifiuta"))))) : null,
 
       h("section", {},
@@ -95,7 +105,7 @@ export function roomBody() {
       banned.length ? h("section", {},
         h("h3", { html: `${icon("ban")} Allontanati / rifiutati` }),
         banned.map((m) => h("div", { class: "dm-row" }, h("strong", {}, m.display_name),
-          h("button", { class: "btn btn-sm", onclick: async (e) => { await approveMember(m.user_id); e.target.closest(".dm-row").remove(); } }, "Riammetti")))) : null,
+          h("button", { class: "btn btn-sm", onclick: async (e) => { const row = e.target.closest(".dm-row"); if (await approveMember(m.user_id)) row?.remove(); } }, "Riammetti")))) : null,
 
       h("section", { class: "danger-zone" },
         h("h3", {}, "Zona pericolosa"),

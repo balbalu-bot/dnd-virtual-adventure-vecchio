@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs>
+<radialGradient id="bg" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#28303a"/><stop offset="1" stop-color="#06080c"/></radialGradient>
+<radialGradient id="vig" cx="50%" cy="45%" r="62%"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></radialGradient>
+<radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6b0"/><stop offset=".45" stop-color="#ffcc33"/><stop offset="1" stop-color="#ff7a00" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowR" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe0d0"/><stop offset=".4" stop-color="#ff3b1f"/><stop offset="1" stop-color="#7a0000" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowB" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e8fbff"/><stop offset=".45" stop-color="#5fd3ff"/><stop offset="1" stop-color="#0050a0" stop-opacity="0"/></radialGradient>
+<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+
+</defs>
+<rect width="200" height="200" fill="url(#bg)"/>
+<path d="M22 200 C28 170 60 156 100 156 C140 156 172 170 178 200 Z" fill="#2a2622"/>
+<path d="M60 160 L60 200 M76 158 L76 200 M92 156 L92 200 M108 156 L108 200 M124 158 L124 200 M140 160 L140 200" stroke="#cfc6ad" stroke-width="6" opacity=".7"/>
+<path d="M56 88 C54 48 76 30 100 30 C124 30 146 48 144 88 C144 108 136 118 128 124 L126 140 L74 140 L72 124 C64 118 56 108 56 88 Z" fill="#e6dcc0"/>
+<path d="M56 88 C54 48 76 30 100 30 C124 30 146 48 144 88 C144 108 136 118 128 124 L126 140 L74 140 L72 124 C64 118 56 108 56 88 Z" fill="url(#shade)"/>
+<path d="M66 84 C68 70 90 68 94 84 C94 100 70 104 66 84 Z M134 84 C132 70 110 68 106 84 C106 100 130 104 134 84 Z" fill="#14100c"/>
+<circle cx="80" cy="86" r="5" fill="url(#glowB)"/><circle cx="120" cy="86" r="5" fill="url(#glowB)"/>
+<path d="M100 98 L92 116 L108 116 Z" fill="#14100c"/>
+<path d="M74 124 L126 124 L124 146 C112 154 88 154 76 146 Z" fill="#d6cbae"/>
+<path d="M80 124 L80 146 M88 124 L88 150 M96 124 L96 152 M104 124 L104 152 M112 124 L112 150 M120 124 L120 146" stroke="#3a3228" stroke-width="2"/>
+<path d="M74 134 L126 134" stroke="#3a3228" stroke-width="2.5"/>
+<path d="M112 40 L104 58 L114 66" stroke="#7a705a" stroke-width="2" fill="none"/>
+<rect width="200" height="200" fill="url(#vig)"/>
+</svg>

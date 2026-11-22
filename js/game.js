@@ -300,7 +300,9 @@ function buildLayout(app) {
       els.dmBtn,
       h("button", { class: "btn btn-sm", html: `${icon("share")} <span>Invita</span>`, onclick: () => openInviteModal(store.game) }),
       audioButton(),
-      h("button", { class: "icon-btn", title: "Impostazioni", html: icon("gear"), onclick: openSettings })));
+      h("button", { class: "icon-btn", title: "Guida e glossario dei termini", html: icon("help"), onclick: () => import("./guide.js").then((m) => m.openGuide()) }),
+      h("button", { class: "icon-btn", title: "Opzioni: stile, chiaro/scuro, dadi", html: icon("sliders"), onclick: () => import("./options.js").then((m) => m.openOptions()) }),
+      h("button", { class: "icon-btn", title: "Impostazioni della partita", html: icon("gear"), onclick: openSettings })));
 
   els.banners = h("div", { class: "banners" });
 
@@ -432,7 +434,7 @@ function renderMembers() {
       h("span", { class: "avatar avatar-txt", html: icon("hourglass") }),
       h("div", { class: "member-main" }, h("strong", {}, m.display_name), h("div", { class: "muted small" }, "chiede di entrare")),
       h("div", { class: "member-actions" },
-        h("button", { class: "btn btn-sm btn-primary", onclick: () => approveMember(m.user_id).catch((e) => toast(e.message, "error")) }, "Ammetti"),
+        h("button", { class: "btn btn-sm btn-primary", title: "Scegli sulla mappa dove comparirà, poi entra", onclick: () => approveMember(m.user_id).catch((e) => toast(e.message, "error")) }, "Ammetti e posiziona"),
         h("button", { class: "btn btn-sm btn-danger", onclick: () => rpc("reject_member", { p_game: store.game.id, p_user: m.user_id }).catch((e) => toast(e.message, "error")) }, "Rifiuta")))),
     ...active.map((m) => memberRow(m, { me, dm, channelMembers })));
   markSpeakingMembers(voice.speaking);

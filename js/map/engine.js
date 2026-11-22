@@ -2,7 +2,7 @@
 //  Motore del tavolo virtuale (Canvas 2D, senza librerie esterne)
 //  Zoom, spostamento, griglia, token, disegni, righello, nebbia, segnali
 // =====================================================================
-import { gridOf, snap, distance, hexFromPixel, hexToPixel, hexCorners } from "./grid.js";
+import { gridOf, snap, distance, hexFromPixel, hexToPixel, hexCorners, cellOf, cellCenter, cellKey, reachable, pathTo } from "./grid.js";
 
 const KIND_LAYER = { door: 0, trap: 1, treasure: 1, note: 1, object: 2, npc: 3, monster: 3, pc: 4 };
 const FOG_SCALE = 0.25;
@@ -70,6 +70,8 @@ export class MapView {
     const changedMap = !this.map || this.map.id !== map?.id;
     this.map = map;
     this.g = map ? gridOf(map) : null;
+    this.blocked = new Set(Array.isArray(map?.blocked) ? map.blocked : []);
+    this._reachCache = null;
     if (map && imageUrl) {
       this.bg = loadImg(imageUrl, () => this.invalidate());
     } else this.bg = null;
@@ -77,8 +79,24 @@ export class MapView {
     this.setFog(map?.fog || []);
     this.invalidate();
   }
-  setTokens(list) { this.tokens = new Map(list.map((t) => [t.id, t])); this.invalidate(); }
-  upsertToken(t) { this.tokens.set(t.id, { ...(this.tokens.get(t.id) || {}), ...t }); this.remoteDrags.delete(t.id); this.invalidate(); }
+  setTokens(list) { this.tokens = new Map(list.map((t) => [t.id, t])); this._reachCache = null; this.invalidate(); }
+  upsertToken(t) { this.tokens.set(t.id, { ...(this.tokens.get(t.id) || {}), ...t }); this.remoteDrags.delete(t.id); this._reachCache = null; this.invalidate(); }
+  setBlocked(list) { this.blocked = new Set(list || []); this._reachCache = null; this.invalidate(); }
+  hasGrid() { return this.g && this.g.type !== "none"; }
+
+  /** Area di movimento di un token con limite (null = movimento libero) */
+  reachFor(t) {
+    const info = this.opts.moveInfo?.(t);
+    if (!info) return null;
+    if (info.reason) return { denied: info.reason, info };
+    if (!this.hasGrid()) return { radius: info.budgetCells * (this.g?.size || 70), info };
+    const start = cellOf(this.g, t.x, t.y);
+    const ck = `${t.id}|${t.x},${t.y}|${info.budgetCells}|${this.blocked.size}`;
+    if (this._reachCache?.k === ck) return this._reachCache.r;
+    const r = { cells: reachable(this.g, start, info.budgetCells, this.blocked, { w: this.map.width, h: this.map.height }), start, info };
+    this._reachCache = { k: ck, r };
+    return r;
+  }
   removeToken(id) { this.tokens.delete(id); if (this.selected === id) this.select(null); this.invalidate(); }
   setDrawings(list) { this.drawings = new Map(list.map((d) => [d.id, d])); this.invalidate(); }
   upsertDrawing(d) { this.drawings.set(d.id, d); this.invalidate(); }
@@ -191,7 +209,7 @@ export class MapView {
   canMove(t) {
     if (!t) return false;
     if (this.opts.isDM()) return true;
-    return t.owner_id === this.opts.myId && !t.locked && !t.hidden;
+    return t.kind === "pc" && t.owner_id === this.opts.myId && !t.locked && !t.hidden;
   }
 
   onDown(e) {
@@ -214,7 +232,11 @@ export class MapView {
       const t = this.hitToken(p.x, p.y);
       if (t) {
         this.select(t.id);
-        if (this.canMove(t)) this.drag = { id: t.id, dx: p.x - t.x, dy: p.y - t.y, x: t.x, y: t.y, moved: false, sx: p.sx, sy: p.sy };
+        if (this.canMove(t)) {
+          const reach = this.reachFor(t);
+          if (reach?.denied) { this.opts.onMoveDenied?.(reach.denied); return; }
+          this.drag = { id: t.id, dx: p.x - t.x, dy: p.y - t.y, x: t.x, y: t.y, moved: false, sx: p.sx, sy: p.sy, reach };
+        }
         return;
       }
       this.select(null);
@@ -224,6 +246,14 @@ export class MapView {
     if (tool === "measure") { this.measure = { a: this.snapCenter(p), b: this.snapCenter(p) }; this.invalidate(); return; }
     if (tool === "draw") { this.draft = { kind: "path", points: [[p.x, p.y]], color: this.drawStyle.color, width: this.drawStyle.width / Math.max(0.3, this.cam.s) }; return; }
     if (tool === "text") { this.opts.onTextAt?.(p.x, p.y); return; }
+    if (tool === "pick") { this.opts.onPick?.(this.snapCenter(p)); return; }
+    if (tool === "block") {
+      if (!this.hasGrid()) { this.opts.onMoveDenied?.("Per gli ostacoli serve una griglia (quadrata o esagonale)"); return; }
+      const c = cellOf(this.g, p.x, p.y), k = cellKey(c.a, c.b);
+      this.paint = { add: !this.blocked.has(k), changed: false };
+      this.paintCell(k);
+      return;
+    }
     if (tool === "fog-reveal" || tool === "fog-cover") { this.rectOp = { op: tool === "fog-reveal" ? "reveal" : "cover", x0: p.x, y0: p.y, x1: p.x, y1: p.y }; this.invalidate(); }
   }
 
@@ -278,6 +308,15 @@ export class MapView {
       return;
     }
     if (this.rectOp) { this.rectOp.x1 = p.x; this.rectOp.y1 = p.y; this.invalidate(); }
+    if (this.paint) { const c = cellOf(this.g, p.x, p.y); this.paintCell(cellKey(c.a, c.b)); }
+  }
+  paintCell(k) {
+    const [a, b] = k.split(",").map(Number);
+    const c = cellCenter(this.g, a, b);
+    if (c.x < 0 || c.y < 0 || c.x > this.map.width || c.y > this.map.height) return;
+    if (this.paint.add === this.blocked.has(k)) return;
+    if (this.paint.add) this.blocked.add(k); else this.blocked.delete(k);
+    this.paint.changed = true; this._reachCache = null; this.invalidate();
   }
 
   onUp(e, cancelled) {
@@ -292,8 +331,23 @@ export class MapView {
         const s = this.snapToken(t, d.x, d.y);
         const clamped = { x: Math.max(0, Math.min(this.map.width, s.x)), y: Math.max(0, Math.min(this.map.height, s.y)) };
         const prev = { x: t.x, y: t.y };
+        let path = null;
+        if (d.reach?.cells) {
+          const c = cellOf(this.g, clamped.x, clamped.y);
+          path = pathTo(d.reach.cells, cellKey(c.a, c.b));
+          if (!path) {
+            this.opts.onMoveDenied?.(this.blocked.has(cellKey(c.a, c.b)) ? "Lì non si può stare: è un ostacolo" : "Troppo lontano, oppure la strada è bloccata");
+            this.opts.onTokenDrag?.(t, t.x, t.y);
+            this.invalidate(); return;
+          }
+        } else if (d.reach?.radius != null && Math.hypot(clamped.x - t.x, clamped.y - t.y) > d.reach.radius + 1) {
+          this.opts.onMoveDenied?.("Troppo lontano per il tuo movimento");
+          this.opts.onTokenDrag?.(t, t.x, t.y);
+          this.invalidate(); return;
+        }
         t.x = clamped.x; t.y = clamped.y; // ottimistico
-        this.opts.onTokenDrop?.(t, clamped.x, clamped.y, prev);
+        this._reachCache = null;
+        this.opts.onTokenDrop?.(t, clamped.x, clamped.y, prev, path);
       }
       this.invalidate();
       return;
@@ -308,6 +362,11 @@ export class MapView {
       const d = this.draft; this.draft = null;
       if (!cancelled && d.points.length > 1) this.opts.onDrawingDone?.({ kind: "path", points: simplify(d.points, 1.5 / this.cam.s), color: d.color, width: Math.round(d.width * 10) / 10 });
       this.invalidate();
+      return;
+    }
+    if (this.paint) {
+      const changed = this.paint.changed; this.paint = null;
+      if (changed) this.opts.onBlockedChange?.([...this.blocked]);
       return;
     }
     if (this.rectOp) {
@@ -388,6 +447,8 @@ export class MapView {
     }
 
     this.drawGrid(ctx);
+    this.drawBlocked(ctx);
+    this.drawReach(ctx);
     for (const d of this.drawings.values()) this.drawDrawing(ctx, d);
     if (this.draft) this.drawDrawing(ctx, this.draft);
 
@@ -426,7 +487,7 @@ export class MapView {
     if (this.measure) this.drawMeasure(ctx, this.measure.a, this.measure.b, "#f4d58d");
     if (this.drag?.moved) {
       const t = this.tokens.get(this.drag.id);
-      if (t) this.drawMeasure(ctx, { x: t.x, y: t.y }, this.snapToken(t, this.drag.x, this.drag.y), "#f4d58d");
+      if (t && !this.drag.reach?.cells) this.drawMeasure(ctx, { x: t.x, y: t.y }, this.snapToken(t, this.drag.x, this.drag.y), "#f4d58d");
     }
     for (const [id, r] of this.remoteDrags) if (now - r.at > 2500) this.remoteDrags.delete(id);
 
@@ -476,6 +537,81 @@ export class MapView {
       }
     }
     ctx.stroke();
+    ctx.restore();
+  }
+
+  cellPath(ctx, a, b) {
+    const g = this.g;
+    if (g.type === "hex") {
+      const c = hexToPixel(g, a, b), pts = hexCorners(g, c.x, c.y);
+      ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < 6; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath();
+    } else ctx.rect(a * g.size + g.ox, b * g.size + g.oy, g.size, g.size);
+  }
+
+  drawBlocked(ctx) {
+    if (!this.opts.isDM() || !this.hasGrid() || !this.blocked.size) return;
+    const strong = this.tool === "block";
+    if (!strong && !this.showBlocked) return;
+    const s = this.cam.s, g = this.g;
+    ctx.save();
+    ctx.fillStyle = strong ? "rgba(190,30,20,.42)" : "rgba(190,30,20,.2)";
+    ctx.strokeStyle = strong ? "rgba(255,120,100,.9)" : "rgba(255,120,100,.45)";
+    ctx.lineWidth = 1.5 / s;
+    ctx.beginPath();
+    for (const k of this.blocked) { const [a, b] = k.split(",").map(Number); this.cellPath(ctx, a, b); }
+    ctx.fill(); ctx.stroke();
+    if (strong && g.size * s > 18) {
+      ctx.beginPath();
+      for (const k of this.blocked) {
+        const [a, b] = k.split(",").map(Number); const c = cellCenter(g, a, b), q = g.size * 0.22;
+        ctx.moveTo(c.x - q, c.y - q); ctx.lineTo(c.x + q, c.y + q); ctx.moveTo(c.x + q, c.y - q); ctx.lineTo(c.x - q, c.y + q);
+      }
+      ctx.lineWidth = 3 / s; ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /** Caselle in cui il personaggio selezionato (o trascinato) può andare */
+  drawReach(ctx) {
+    const id = this.drag?.id || this.selected; if (!id) return;
+    const t = this.tokens.get(id); if (!t || !this.canMove(t)) return;
+    const reach = this.drag?.reach !== undefined ? this.drag.reach : this.reachFor(t);
+    if (!reach || reach.denied) return;
+    const s = this.cam.s;
+    ctx.save();
+    if (reach.radius != null) {
+      ctx.fillStyle = "rgba(127,214,140,.16)"; ctx.strokeStyle = "rgba(127,214,140,.8)"; ctx.lineWidth = 2 / s;
+      ctx.beginPath(); ctx.arc(t.x, t.y, reach.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore(); return;
+    }
+    ctx.fillStyle = "rgba(127,214,140,.2)"; ctx.strokeStyle = "rgba(127,214,140,.55)"; ctx.lineWidth = 1 / s;
+    ctx.beginPath();
+    for (const c of reach.cells.values()) this.cellPath(ctx, c.a, c.b);
+    ctx.fill(); ctx.stroke();
+    // percorso verso la casella sotto il dito durante il trascinamento
+    if (this.drag?.moved) {
+      const sp = this.snapToken(t, this.drag.x, this.drag.y);
+      const c = cellOf(this.g, sp.x, sp.y);
+      const path = pathTo(reach.cells, cellKey(c.a, c.b));
+      if (path) {
+        ctx.strokeStyle = "#f4d58d"; ctx.lineWidth = 4 / s; ctx.lineJoin = "round"; ctx.setLineDash([]);
+        ctx.beginPath();
+        path.forEach(([a, b], i) => { const p = cellCenter(this.g, a, b); i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+        ctx.stroke();
+        const cost = reach.cells.get(cellKey(c.a, c.b)).cost, ft = this.g.feet;
+        const left = reach.info.budgetCells - cost;
+        const label = `${cost} ${cost === 1 ? "casella" : "caselle"} · ${String(Math.round(cost * ft * 0.3 * 10) / 10).replace(".", ",")} m — ne restano ${Math.floor(left + 1e-6)}`;
+        const e = cellCenter(this.g, c.a, c.b);
+        ctx.font = `bold ${14 / s}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        const w = ctx.measureText(label).width + 14 / s;
+        ctx.fillStyle = "rgba(10,7,4,.85)"; ctx.fillRect(e.x - w / 2, e.y - this.g.size / 2 - 30 / s, w, 22 / s);
+        ctx.fillStyle = "#f4d58d"; ctx.fillText(label, e.x, e.y - this.g.size / 2 - 19 / s);
+      } else {
+        const p = cellCenter(this.g, c.a, c.b), q = this.g.size * 0.3;
+        ctx.strokeStyle = "#ff5a4a"; ctx.lineWidth = 5 / s;
+        ctx.beginPath(); ctx.moveTo(p.x - q, p.y - q); ctx.lineTo(p.x + q, p.y + q); ctx.moveTo(p.x + q, p.y - q); ctx.lineTo(p.x - q, p.y + q); ctx.stroke();
+      }
+    }
     ctx.restore();
   }
 

@@ -7,7 +7,8 @@ import { h, icon, toast, modal, confirmDialog, resizeImage, loadPref, savePref }
 import { roomBody } from "./dm-panel.js";
 import { audioPanel, dmSetMusic, AMBIENCES } from "./audio.js";
 import { tableState } from "./map/table.js";
-import { snap, gridOf } from "./map/grid.js";
+import { snap, gridOf, speedFeet } from "./map/grid.js";
+import { SRD_MONSTERS, MONSTER_ART, srdToBestiary } from "./monsters.js";
 import { activeEncounter, addToCombat } from "./combat.js";
 import { exportCampaign, importCampaign } from "./campaign-io.js";
 import { navigate } from "./main.js";
@@ -119,7 +120,34 @@ async function bestiaryTab() {
         h("button", { class: "btn btn-sm btn-primary", title: "Metti sulla mappa aperta (nascosto)", onclick: () => place(b, false) }, "Sulla mappa"),
         h("button", { class: "btn btn-sm", title: "Sulla mappa e nel combattimento in corso", onclick: () => place(b, true) }, "+ combattimento"),
         h("button", { class: "btn btn-sm", onclick: () => edit(b) }, "Modifica"))))) : h("p", {}, "Archivio vuoto."),
-    h("button", { class: "btn btn-sm btn-primary", html: `${icon("plus")} Nuovo mostro o PNG`, onclick: () => edit(null) }));
+    h("div", { class: "row-btns" },
+      h("button", { class: "btn btn-sm btn-gold", onclick: () => fromSrd() }, "📖 Aggiungi dal manuale (SRD)"),
+      h("button", { class: "btn btn-sm btn-primary", html: `${icon("plus")} Nuovo mostro o PNG`, onclick: () => edit(null) })));
+
+  const fromSrd = () => {
+    const chosen = new Set();
+    const grid = h("div", { class: "srd-grid" }, SRD_MONSTERS.map((m) => {
+      const card = h("button", { type: "button", class: "srd-card", onclick: () => { chosen.has(m.id) ? chosen.delete(m.id) : chosen.add(m.id); card.classList.toggle("on", chosen.has(m.id)); } },
+        h("img", { src: `img/monsters/${m.id}.svg`, alt: "" }),
+        h("strong", {}, m.name),
+        h("span", { class: "muted small" }, `GS ${m.cr} · PF ${m.hp} · CA ${m.ac}`));
+      return card;
+    }));
+    modal({
+      title: "Mostri e PNG dal manuale (SRD 5.1)", wide: true,
+      body: h("div", {}, h("p", { class: "muted small" }, "Tocca quelli che vuoi aggiungere al tuo archivio: arrivano con statistiche, attacchi e illustrazione. GS = grado di sfida (quanto è pericoloso)."), grid),
+      actions: [{ label: "Annulla" }, {
+        label: "Aggiungi i selezionati", primary: true,
+        onClick: async () => {
+          if (!chosen.size) { toast("Non hai scelto nessun mostro", "info"); return false; }
+          const ins = SRD_MONSTERS.filter((m) => chosen.has(m.id)).map((m) => ({ ...srdToBestiary(m), game_id: gid }));
+          const saved = await must(sb.from("bestiary").insert(ins).select());
+          rows.push(...saved); rows.sort((a, b) => a.name.localeCompare(b.name)); render();
+          toast(`Aggiunti ${saved.length} all'archivio`, "ok");
+        },
+      }],
+    });
+  };
 
   const edit = (b) => {
     let image = b?.image || null;
@@ -134,7 +162,11 @@ async function bestiaryTab() {
       notes: h("textarea", { rows: 4, maxlength: 8000, placeholder: "Tratti, resistenze, tattica, tesoro…" }, b?.notes || ""),
       file: h("input", { type: "file", accept: "image/*" }),
     };
-    f.file.onchange = async () => { if (f.file.files[0]) image = await resizeImage(f.file.files[0], 128); };
+    const prev = h("div", { class: "tok-preview" });
+    const showPrev = () => prev.replaceChildren(image ? h("img", { src: image, alt: "" }) : h("span", { class: "muted small" }, "nessuna"));
+    showPrev();
+    f.file.onchange = async () => { if (f.file.files[0]) { image = await resizeImage(f.file.files[0], 200); showPrev(); } };
+    const gallery = h("div", { class: "art-gallery" }, MONSTER_ART.map((a) => h("button", { type: "button", class: "art-pick", title: a.name, onclick: () => { image = a.src; showPrev(); } }, h("img", { src: a.src, alt: a.name, loading: "lazy" }))));
     const actions = [{ label: "Annulla" }, {
       label: "Salva", primary: true,
       onClick: async () => {
@@ -154,7 +186,7 @@ async function bestiaryTab() {
           h("div", { class: "row2" }, h("label", {}, "Punti ferita", f.hp), h("label", {}, "Classe Armatura", f.ac)),
           h("div", { class: "row2" }, h("label", {}, "Bonus iniziativa", f.init), h("label", {}, "Velocità", f.speed)),
           h("div", { class: "row2" }, h("label", {}, "Taglia", f.size), h("label", {}, "Colore", f.color)),
-          h("label", {}, "Immagine (facoltativa)", f.file)),
+          h("div", { class: "label" }, "Illustrazione"), gallery, h("label", {}, "…oppure carica un'immagine tua", f.file), prev),
         h("div", {}, h("label", {}, "Attacchi", f.attacks), h("label", {}, "Note", f.notes))),
       actions,
     });
@@ -169,7 +201,7 @@ async function bestiaryTab() {
     const c = T.view.viewCenter();
     const p = snap(gridOf(map), c.x + (Math.random() - 0.5) * map.grid_size * 2, c.y + (Math.random() - 0.5) * map.grid_size * 2, b.size);
     try {
-      const tok = await must(sb.from("tokens").insert({ game_id: gid, map_id: map.id, kind: b.kind, name, x: p.x, y: p.y, size: b.size, color: b.color, image: b.image, hidden: b.kind === "monster" }).select().single());
+      const tok = await must(sb.from("tokens").insert({ game_id: gid, map_id: map.id, kind: b.kind, name, x: p.x, y: p.y, size: b.size, color: b.color, image: b.image, hidden: b.kind === "monster", speed: speedFeet(b.speed) }).select().single());
       T.view.upsertToken(tok);
       if (combat) {
         if (!activeEncounter()) { toast("Nessun combattimento in corso: il token è sulla mappa (nascosto).", "info"); return; }

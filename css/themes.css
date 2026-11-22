@@ -1,0 +1,126 @@
+/* =====================================================================
+   Stili dell'interfaccia: medievale (predefinito), classico, moderno
+   e versione chiara/scura. Scelti in Opzioni, valgono per dispositivo.
+   ===================================================================== */
+
+/* ---------- variabili comuni ai temi (campi di testo e superfici) */
+:root { --field: #fbf4e2; --field-ink: var(--ink); --field-line: #a88a58; --bar-1: #3a291b; --bar-2: #24190f; --col-1: rgba(58, 41, 27, .55); --col-2: rgba(28, 20, 14, .8); --panel: rgba(0,0,0,.22); --panel-line: #3d2f22; --on-accent: #2a1a06; }
+
+input:not([type=checkbox]):not([type=range]):not([type=file]), select, textarea { background: var(--field); color: var(--field-ink); border-color: var(--field-line); }
+.topbar { background: linear-gradient(180deg, var(--bar-1), var(--bar-2)); }
+.controlbar { background: linear-gradient(180deg, var(--bar-1), var(--bar-2)); }
+.col-left, .col-right { background: linear-gradient(180deg, var(--col-1), var(--col-2)); }
+.panel { background: var(--panel); border-color: var(--panel-line); }
+.btn-primary, .btn-gold { color: var(--on-accent); }
+
+/* ===================================================== MEDIEVALE CHIARO */
+[data-theme=medievale][data-mode=light] {
+  --bg: #e7d9bb; --stone: #f2e7cf; --stone-2: #eadcbd; --stone-3: #dfcca5; --wood: #c9ab78; --line: #b39566;
+  --text: #2a1c0f; --muted: #6a5236; --gold: #b07a2a; --gold-2: #7a4a12; --bronze: #8a5a1c;
+  --bar-1: #d9c296; --bar-2: #c9ad7a; --col-1: rgba(255,248,230,.65); --col-2: rgba(236,222,190,.85);
+  --panel: rgba(255,255,255,.4); --panel-line: #c7ab7b;
+}
+
+/* ===================================================== CLASSICO */
+[data-theme=classico] {
+  --bg: #151012; --stone: #211a1c; --stone-2: #2b2225; --stone-3: #382c30; --wood: #4a2a2a; --line: #5a3d40;
+  --parch: #f1e7d3; --parch-2: #e3d3b4; --ink: #2b1a14; --ink-2: #6b5446;
+  --text: #f0e6da; --muted: #bba79a; --gold: #c9a227; --gold-2: #ecd27a; --bronze: #8e1c1c;
+  --title: "Book Antiqua", "Palatino Linotype", Palatino, Georgia, serif;
+  --font: Georgia, "Times New Roman", serif;
+  --bar-1: #3a1a1c; --bar-2: #221012; --col-1: rgba(50, 26, 28, .55); --col-2: rgba(25, 15, 17, .85);
+  --panel: rgba(0,0,0,.25); --panel-line: #4a3236; --on-accent: #2b1a06;
+}
+[data-theme=classico] body { background: radial-gradient(ellipse at 50% 0%, rgba(142,28,28,.18), transparent 60%), var(--bg); }
+[data-theme=classico] .btn-primary { color: #fff; border-color: #6a1010; background: linear-gradient(180deg, #b52a2a, #8e1c1c 55%, #6a1010); text-shadow: none; }
+[data-theme=classico] .topbar, [data-theme=classico] .controlbar { border-color: #8e1c1c; }
+[data-theme=classico] h1, [data-theme=classico] h2 { letter-spacing: .04em; }
+[data-theme=classico][data-mode=light] {
+  --bg: #efe6d4; --stone: #fbf6ea; --stone-2: #f3e9d4; --stone-3: #e6d6b6; --wood: #c8ad85; --line: #c2a77a;
+  --text: #2b1a14; --muted: #6b5446; --gold: #8e1c1c; --gold-2: #7a1414; --bronze: #5e1010;
+  --bar-1: #8e1c1c; --bar-2: #6a1212; --col-1: rgba(255,252,244,.8); --col-2: rgba(240,230,210,.9);
+  --panel: rgba(255,255,255,.55); --panel-line: #d6c09a; --on-accent: #fff;
+}
+[data-theme=classico][data-mode=light] .topbar, [data-theme=classico][data-mode=light] .topbar .icon-btn,
+[data-theme=classico][data-mode=light] .topbar-title, [data-theme=classico][data-mode=light] .controlbar { color: #fbf1e0; }
+[data-theme=classico][data-mode=light] .btn-gold { color: #fff; }
+
+/* ===================================================== MODERNO */
+[data-theme=moderno] {
+  --bg: #0f1419; --stone: #171d24; --stone-2: #1e2630; --stone-3: #283240; --wood: #2a3442; --line: #334155;
+  --parch: #1e2630; --parch-2: #1a212a; --ink: #e6edf3; --ink-2: #94a3b8;
+  --text: #e6edf3; --muted: #94a3b8; --gold: #7c8cff; --gold-2: #a5b4fc; --bronze: #4f46e5;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --title: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 12px; --shadow: 0 8px 28px rgba(0,0,0,.35);
+  --field: #0f1419; --field-ink: #e6edf3; --field-line: #334155;
+  --bar-1: #151b22; --bar-2: #151b22; --col-1: #141a21; --col-2: #141a21; --panel: #1a2129; --panel-line: #263140; --on-accent: #fff;
+}
+[data-theme=moderno] body { background: var(--bg); }
+[data-theme=moderno] h1, [data-theme=moderno] h2, [data-theme=moderno] h3 { letter-spacing: 0; font-weight: 700; }
+[data-theme=moderno] .btn { background: var(--stone-3); box-shadow: none; border-color: var(--line); border-radius: 10px; }
+[data-theme=moderno] .btn-primary, [data-theme=moderno] .btn-gold { background: var(--bronze); border-color: var(--bronze); color: #fff; text-shadow: none; }
+[data-theme=moderno] .btn-danger { background: #dc2626; border-color: #dc2626; }
+[data-theme=moderno] .parchment { background: var(--stone-2); color: var(--text); border-color: var(--line); box-shadow: var(--shadow); }
+[data-theme=moderno] .parchment h2, [data-theme=moderno] .parchment h3 { color: var(--text); }
+[data-theme=moderno] .parchment .muted { color: var(--muted); }
+[data-theme=moderno] .parchment .btn:not(.btn-primary):not(.btn-danger):not(.btn-private) { color: var(--text); background: var(--stone-3); border-color: var(--line); }
+[data-theme=moderno] .modal { background: var(--stone-2); color: var(--text); }
+[data-theme=moderno] .topbar, [data-theme=moderno] .controlbar { border-color: var(--line); box-shadow: none; }
+[data-theme=moderno] .crest, [data-theme=moderno] .boot-crest { filter: saturate(.3) hue-rotate(180deg); }
+[data-theme=moderno][data-mode=light] {
+  --bg: #f4f6fa; --stone: #ffffff; --stone-2: #ffffff; --stone-3: #eef1f6; --wood: #e2e7ef; --line: #d5dce6;
+  --parch: #ffffff; --parch-2: #ffffff; --ink: #18202b; --ink-2: #5b6676;
+  --text: #18202b; --muted: #5b6676; --gold: #4f46e5; --gold-2: #4338ca; --bronze: #4f46e5;
+  --field: #ffffff; --field-ink: #18202b; --field-line: #cbd3df;
+  --bar-1: #ffffff; --bar-2: #ffffff; --col-1: #f8fafc; --col-2: #f8fafc; --panel: #ffffff; --panel-line: #e2e8f0;
+  --shadow: 0 6px 20px rgba(15,23,42,.08);
+}
+
+/* ===================================================== CHIARO: ritocchi comuni */
+[data-mode=light] body { background: var(--bg); }
+[data-mode=light] .icon-btn { background: rgba(0,0,0,.04); }
+[data-mode=light] .icon-btn:hover { background: rgba(0,0,0,.08); }
+[data-mode=light] .roll, [data-mode=light] .cb, [data-mode=light] .chat-msg { border-color: var(--line); background: rgba(255,255,255,.55); }
+[data-mode=light] .roll-total, [data-mode=light] .dice-title { color: var(--gold-2); }
+[data-mode=light] .stage-channel { color: var(--text); }
+[data-mode=light] .stage-channel.private { color: #7a1a12; }
+[data-mode=light] .map-wrap { border-color: var(--line); }
+[data-mode=light] .controlbar, [data-mode=light] .topbar { box-shadow: 0 1px 6px rgba(0,0,0,.1); }
+[data-mode=light] .modal-wrap { background: rgba(20, 15, 10, .45); }
+[data-mode=light] code { background: rgba(0,0,0,.07); }
+[data-mode=light] .error { color: #b3261e; }
+
+/* ---------- opzioni */
+.options h3 { margin-top: .9em; }
+.theme-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .5em; }
+.theme-card { display: flex; flex-direction: column; gap: .25em; align-items: flex-start; text-align: left; padding: .7em; border-radius: 10px; border: 2px solid var(--line); background: rgba(0,0,0,.06); color: inherit; font: inherit; cursor: pointer; }
+.theme-card.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(212,162,76,.35); }
+.theme-swatch { display: flex; gap: 4px; margin-bottom: .2em; }
+.theme-swatch i { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
+.t-medievale .theme-swatch i:nth-child(1) { background: #241d17; } .t-medievale .theme-swatch i:nth-child(2) { background: #d4a24c; } .t-medievale .theme-swatch i:nth-child(3) { background: #eadbb8; }
+.t-classico .theme-swatch i:nth-child(1) { background: #221012; } .t-classico .theme-swatch i:nth-child(2) { background: #8e1c1c; } .t-classico .theme-swatch i:nth-child(3) { background: #f1e7d3; }
+.t-moderno .theme-swatch i:nth-child(1) { background: #0f1419; } .t-moderno .theme-swatch i:nth-child(2) { background: #4f46e5; } .t-moderno .theme-swatch i:nth-child(3) { background: #f4f6fa; }
+.t-classico strong { font-family: Georgia, serif; } .t-moderno strong { font-family: system-ui, sans-serif; } .t-medievale strong { font-family: "Cinzel", serif; }
+.opt-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.opt-seg button { font: inherit; font-weight: 700; padding: .5em 1em; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.opt-seg button.on { background: var(--gold); color: var(--on-accent); }
+.dice-colors { display: flex; flex-wrap: wrap; gap: .4em; margin-top: .6em; }
+.dice-color { font: inherit; font-weight: 700; font-size: .82rem; padding: .45em .8em; border-radius: 999px; border: 2px solid transparent; cursor: pointer; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.dice-color.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(0,0,0,.25); }
+.opt-dice-preview { display: flex; gap: .6em; align-items: center; justify-content: center; min-height: 80px; margin: .6em 0; padding: .5em; border-radius: 12px; background: radial-gradient(circle at 50% 0%, rgba(80,55,30,.95), rgba(25,17,10,.95)); }
+.opt-dice-preview .die-anim { width: 56px; height: 56px; }
+.die3d { display: inline-block; vertical-align: middle; transition: opacity .3s; }
+.die3d.dropped { opacity: .35; }
+
+/* ---------- ritocchi dopo la prova a schermo */
+:root { --dock-1: #1b140e; --dock-2: #120d09; }
+.video-dock { background: linear-gradient(180deg, var(--dock-1), var(--dock-2)); }
+.seg button.active { color: var(--on-accent); }
+[data-theme=classico] { --dock-1: #1d1215; --dock-2: #140c0e; }
+[data-theme=moderno] { --dock-1: #121820; --dock-2: #0f1419; }
+[data-mode=light] { --dock-1: #e9e2d2; --dock-2: #ddd3bf; }
+[data-theme=moderno][data-mode=light] { --dock-1: #eef1f6; --dock-2: #e6ebf2; }
+[data-mode=light] .chan-btn:not(.private) { color: #2f5a1a; background: rgba(111,166,74,.16); }
+[data-theme=classico][data-mode=light] .topbar-title strong { color: #fff3dc; }
+[data-theme=classico][data-mode=light] .topbar .btn:not(.btn-gold):not(.btn-primary) { color: var(--text); }
+[data-mode=light] .map-badge.live { color: #2f5a1a; }

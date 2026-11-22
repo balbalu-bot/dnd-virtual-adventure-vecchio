@@ -2,6 +2,8 @@
 //  Dadi: il risultato lo genera il SERVER (funzione roll_dice),
 //  il browser si limita a mostrarlo con un'animazione.
 // =====================================================================
+import { opts, diceColors } from "./options.js";
+import { die3d } from "./dice3d.js";
 import { sb, rpc, must } from "./supabase.js";
 import { store, isDM } from "./store.js";
 import { h, icon, toast, fmtTime, beep, loadPref, savePref } from "./ui.js";
@@ -23,7 +25,7 @@ const SHAPES = {
   2: '<circle cx="50" cy="50" r="42"/>',
   3: '<polygon points="50,6 94,88 6,88"/>',
 };
-function dieSvg(sides, value, cls = "") {
+export function dieSvg(sides, value, cls = "") {
   return `<svg class="die ${cls}" viewBox="0 0 100 100"><g class="die-shape">${SHAPES[sides] || SHAPES[6]}</g><text x="50" y="${sides === 4 ? 70 : 60}" text-anchor="middle">${value}</text></svg>`;
 }
 
@@ -137,7 +139,14 @@ function showOverlay(r, mine) {
   for (const g of r.detail || []) for (const v of g.rolls) if (dice.length < 12) dice.push({ sides: g.die, value: v, kept: g.kept.includes(v) });
   const box = h("div", { class: `dice-overlay ${crit(r)}` });
   const tray = h("div", { class: "dice-tray" });
-  dice.forEach((d, i) => {
+  if (opts.diceStyle === "3d") {
+    const colors = diceColors();
+    dice.forEach((d, i) => {
+      const cv = die3d(d.sides, d.value, { size: dice.length > 6 ? 60 : 84, colors, delay: i * 70, duration: 950,
+        onLand: () => { if (!d.kept) cv.classList.add("dropped"); } });
+      tray.append(cv);
+    });
+  } else dice.forEach((d, i) => {
     const el = h("span", { class: "die-anim", style: { animationDelay: `${i * 60}ms` }, html: dieSvg(d.sides, "?") });
     tray.append(el);
     let n = 0;
@@ -158,7 +167,7 @@ function showOverlay(r, mine) {
     tray, total);
   stage.append(box);
   if (mine) beep("tx-on");
-  setTimeout(() => { total.textContent = String(r.total); box.classList.add("done"); }, 900);
+  setTimeout(() => { total.textContent = String(r.total); box.classList.add("done"); }, opts.diceStyle === "3d" ? 1000 + Math.min(dice.length, 12) * 70 : 900);
   setTimeout(() => box.classList.add("out"), 3600);
   setTimeout(() => box.remove(), 4200);
 }

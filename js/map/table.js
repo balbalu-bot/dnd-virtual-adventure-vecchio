@@ -5,7 +5,8 @@ import { sb, rpc, must } from "../supabase.js";
 import { store, isDM, memberName, emit } from "../store.js";
 import { h, icon, toast, modal, confirmDialog, loadPref, savePref, resizeImage } from "../ui.js";
 import { MapView } from "./engine.js";
-import { gridOf, snap } from "./grid.js";
+import { gridOf, snap, speedFeet, cellOf, cellKey } from "./grid.js";
+import { MONSTER_ART } from "../monsters.js";
 
 const KINDS = {
   pc: "Personaggio giocante", npc: "PNG", monster: "Mostro", object: "Oggetto",
@@ -17,7 +18,7 @@ const DRAW_COLORS = ["#b3261e", "#1565c0", "#2e7d32", "#f9a825", "#6a1b9a", "#11
 
 const T = {
   gameId: null, view: null, els: {}, maps: new Map(), viewMapId: null,
-  urls: new Map(), sendBroadcast: () => {}, listEl: null,
+  urls: new Map(), sendBroadcast: () => {}, listEl: null, moveLocal: new Map(), placing: null,
 };
 
 export function userColor(id = "") {
@@ -41,7 +42,8 @@ export function mountTable(container, listContainer, { gameId, sendBroadcast }) 
   e.zoom = h("div", { class: "map-tools" },
     toolBtn("zoomOut", "−", "Rimpicciolisci", () => T.view?.zoomAt(1 / 1.25)),
     toolBtn("zoomIn", "+", "Ingrandisci", () => T.view?.zoomAt(1.25)),
-    h("button", { class: "tool", title: "Adatta allo schermo", html: icon("expand"), onclick: () => T.view?.fit() }));
+    h("button", { class: "tool", title: "Adatta la mappa alla finestra", html: icon("expand"), onclick: () => T.view?.fit() }),
+    e.fullBtn = h("button", { class: "tool", title: "Mappa a tutto schermo (tasto F)", html: icon("fullscreen"), onclick: () => toggleMapFullscreen() }));
   e.bar = h("div", { class: "map-toolbar" },
     h("div", { class: "map-toolbar-left" }, e.title, e.badge, e.showBtn),
     e.tools, e.dmTools, e.zoom);
@@ -64,15 +66,64 @@ export function mountTable(container, listContainer, { gameId, sendBroadcast }) 
     onDrawingDone: saveDrawing,
     onTextAt: addTextAt,
     onFogOp: addFogOp,
+    moveInfo,
+    onMoveDenied: (msg) => toast(msg, "info", { timeout: 2600 }),
+    onBlockedChange: saveBlocked,
+    onPick: (p) => T.placing?.pick(p),
   });
   // trasparente sotto la barra: lo strato del canvas va sotto i pannelli flottanti
   e.wrap.prepend(T.view.canvas);
   renderTools();
   renderDrawBar();
+  document.addEventListener("keydown", fullKey);
+  document.addEventListener("fullscreenchange", fullChange);
+  document.addEventListener("webkitfullscreenchange", fullChange);
   return T;
 }
 
+// ============================================================ tutto schermo
+// Modalità "mappa grande": la mappa copre tutta la finestra (resta visibile la
+// barra della voce in basso). Dove il browser lo permette (PC, Android, iPad)
+// si nascondono anche le barre del browser; su iPhone Safari non lo consente,
+// quindi lì la mappa occupa tutta la pagina ma la barra di Safari resta.
+export function toggleMapFullscreen(force) {
+  const on = force ?? !document.body.classList.contains("map-full");
+  const cb = document.querySelector(".controlbar");
+  document.documentElement.style.setProperty("--cbh", (cb?.offsetHeight || 0) + "px");
+  document.body.classList.toggle("map-full", on);
+  if (T.els.fullBtn) {
+    T.els.fullBtn.innerHTML = icon(on ? "fullscreenExit" : "fullscreen");
+    T.els.fullBtn.title = on ? "Esci dal tutto schermo (Esc o F)" : "Mappa a tutto schermo (tasto F)";
+    T.els.fullBtn.classList.toggle("on", on);
+  }
+  const de = document.documentElement;
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  try {
+    if (on && !fsEl) (de.requestFullscreen || de.webkitRequestFullscreen)?.call(de)?.catch?.(() => {});
+    if (!on && fsEl) (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch?.(() => {});
+  } catch { /* il browser non lo permette: resta la modalità a pagina intera */ }
+  setTimeout(() => T.view?.resize?.(), 60);
+  setTimeout(() => T.view?.fit(), 120);
+}
+
+function fullChange() {
+  // se l'utente esce dal tutto schermo del browser (Esc, gesto), esce anche la mappa
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!fsEl && document.body.classList.contains("map-full")) toggleMapFullscreen(false);
+}
+
+function fullKey(e) {
+  if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
+  if (document.querySelector(".modal-wrap")) return;
+  if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); toggleMapFullscreen(); }
+  else if (e.key === "Escape" && document.body.classList.contains("map-full")) toggleMapFullscreen(false);
+}
+
 export function unmountTable() {
+  if (document.body.classList.contains("map-full")) toggleMapFullscreen(false);
+  document.removeEventListener("keydown", fullKey);
+  document.removeEventListener("fullscreenchange", fullChange);
+  document.removeEventListener("webkitfullscreenchange", fullChange);
   T.view?.destroy(); T.view = null;
   T.maps.clear();
 }
@@ -225,6 +276,7 @@ function renderTools() {
   e.dmTools.replaceChildren(
     mk("fog-reveal", "🌤", "Nebbia: trascina per RIVELARE un'area"),
     mk("fog-cover", "🌫", "Nebbia: trascina per COPRIRE un'area"),
+    mk("block", "🧱", "Ostacoli: tocca o trascina sulle caselle dove non si può camminare (muri, colonne, burroni)"),
     h("button", { class: "tool", title: "Opzioni nebbia di guerra", onclick: fogMenu }, map?.fog_enabled ? "Nebbia ✓" : "Nebbia"),
     h("button", { class: "tool tool-wide", title: "Aggiungi un elemento sulla mappa", html: `${icon("plus")} Elemento`, onclick: () => addTokenDialog() }));
 }
@@ -232,8 +284,18 @@ function renderTools() {
 function renderDrawBar() {
   const bar = T.els.drawBar; if (!bar) return;
   const tool = T.view?.tool;
-  bar.hidden = !(tool === "draw" || tool === "text");
+  bar.hidden = !(tool === "draw" || tool === "text" || tool === "block");
   if (bar.hidden) return;
+  if (tool === "block") {
+    bar.replaceChildren(
+      h("span", { class: "small" }, "🧱 Tocca o trascina sulle caselle: rosse = non calpestabili. Ripassa per toglierle."),
+      h("label", { class: "check small" }, h("input", { type: "checkbox", checked: !!T.view.showBlocked, onchange: (ev) => { T.view.showBlocked = ev.target.checked; T.view.invalidate(); } }), " mostra sempre"),
+      h("button", { class: "btn btn-sm", onclick: async () => {
+        if (!(await confirmDialog("Togliere tutti gli ostacoli da questa mappa?"))) return;
+        T.view.setBlocked([]); saveBlocked([]);
+      } }, "Togli tutti"));
+    return;
+  }
   const st = T.view.drawStyle;
   bar.replaceChildren(
     ...DRAW_COLORS.map((c) => h("button", {
@@ -265,14 +327,126 @@ function renderList() {
 }
 
 // ================================================================== token: movimento e azioni
-async function moveToken(t, x, y, prev) {
+async function moveToken(t, x, y, prev, path) {
   try {
-    await rpc("move_token", { p_token: t.id, p_x: Math.round(x * 10) / 10, p_y: Math.round(y * 10) / 10 });
+    const res = await rpc("move_token", { p_token: t.id, p_x: Math.round(x * 10) / 10, p_y: Math.round(y * 10) / 10, p_path: path || null });
     T.sendBroadcast({ t: "drag", map: T.viewMapId, id: t.id, x, y });
+    if (res && res.left != null && !combatTurnOf(t)) {
+      const old = T.moveLocal.get(t.id);
+      const at = old && Date.now() - old.at < 6000 ? old.at : Date.now();
+      T.moveLocal.set(t.id, { at, used: res.speed - res.left });
+      clearTimeout(T._moveTimer);
+      T._moveTimer = setTimeout(() => { T.view?.upsertToken({ id: t.id }); renderTokenBar(T.view?.tokens.get(T.view.selected)); }, at + 6050 - Date.now());
+    }
+    if (T.view?.selected === t.id) renderTokenBar(T.view.tokens.get(t.id));
   } catch (err) {
     t.x = prev.x; t.y = prev.y; T.view.invalidate();
     toast(err.message, "error");
   }
+}
+
+// ================================================================== movimento limitato
+let combatMod = null;
+import("../combat.js").then((m) => { combatMod = m; }).catch(() => {});
+function combatTurnOf(t) {
+  const enc = combatMod?.activeEncounter?.(); if (!enc) return null;
+  const cb = combatMod.combatantOfToken?.(t.id); if (!cb) return null;
+  return { enc, cb, mine: enc.current_id === cb.id };
+}
+export function tokenSpeed(t) {
+  if (t.speed != null) return Number(t.speed);
+  if (t.kind === "pc" && t.owner_id) {
+    const m = store.members.get(t.owner_id);
+    const ch = m?.character_id ? store.characters.get(m.character_id) : null;
+    if (ch?.data?.speed) return speedFeet(ch.data.speed);
+  }
+  return 30;
+}
+/** Movimento rimasto (in piedi) e motivo se non può muoversi; null = nessun limite (DM) */
+function moveInfo(t) {
+  if (isDM() || !t || t.kind !== "pc") return null;
+  const map = T.maps.get(T.viewMapId); if (!map) return null;
+  const g = gridOf(map);
+  const speed = tokenSpeed(t);
+  let used = 0;
+  const turn = combatTurnOf(t);
+  if (turn) {
+    if (!turn.mine) return { reason: "Aspetta il tuo turno per muoverti", speed, left: 0 };
+    used = Number(t.move_used) || 0;
+  } else {
+    const loc = T.moveLocal.get(t.id);
+    if (loc && Date.now() - loc.at < 6000) used = loc.used;
+    else if (!loc && t.move_window && Date.now() - Date.parse(t.move_window) < 6000) used = Number(t.move_used) || 0;
+  }
+  const left = Math.max(0, speed - used);
+  const budgetCells = left / g.feet;
+  if (g.type !== "none" && budgetCells < 1) {
+    if (turn) return { reason: "Hai finito il movimento per questo turno", speed, left };
+    const loc = T.moveLocal.get(t.id);
+    const wait = loc ? Math.max(1, Math.ceil((loc.at + 6000 - Date.now()) / 1000)) : 6;
+    return { reason: `Riprendi fiato: potrai muoverti di nuovo tra ${wait} s`, speed, left };
+  }
+  return { budgetCells, speed, left, inCombat: !!turn };
+}
+function fmtMove(feet, g) {
+  const cells = Math.floor(feet / g.feet + 1e-6);
+  return `${cells} ${cells === 1 ? "casella" : "caselle"} (${String(Math.round(feet * 0.3 * 10) / 10).replace(".", ",")} m)`;
+}
+
+async function saveBlocked(list) {
+  const map = T.maps.get(T.viewMapId); if (!map) return;
+  try {
+    const row = await must(sb.from("maps").update({ blocked: list }).eq("id", map.id).select().single());
+    T.maps.set(row.id, row);
+  } catch (e) { toast("Ostacoli non salvati: " + e.message, "error"); T.view.setBlocked(map.blocked); }
+}
+
+// ================================================================== posizionamento di un nuovo giocatore
+/**
+ * Il DM tocca la casella dove comparirà il personaggio. Restituisce
+ * "placed" (token creato/spostato), "nomap" (nessuna mappa attiva) o "cancel".
+ */
+export function placePlayer(member) {
+  const map = T.maps.get(T.viewMapId) || null;
+  if (!T.view || !map) return Promise.resolve("nomap");
+  document.querySelectorAll(".modal-wrap .modal-head .icon-btn").forEach((b) => b.click());
+  document.querySelector(".game")?.setAttribute("data-tab", "table");
+  T.placing?.cancel();
+  return new Promise((resolve) => {
+    const prevTool = T.view.tool;
+    const banner = h("div", { class: "place-banner" },
+      h("span", { html: `${icon("users")} Tocca la casella dove comparirà <strong>${escapeHtml(member.character_name || member.display_name)}</strong>` }),
+      h("button", { class: "btn btn-sm", onclick: () => done("cancel") }, "Annulla"));
+    T.els.wrap.append(banner);
+    T.view.setTool("pick");
+    const done = (r) => { banner.remove(); T.placing = null; T.view?.setTool(prevTool === "pick" ? "select" : prevTool); renderTools(); resolve(r); };
+    T.placing = {
+      cancel: () => done("cancel"),
+      pick: async (p) => {
+        const g = gridOf(map);
+        if (g.type !== "none") {
+          const c = cellOf(g, p.x, p.y);
+          if ((map.blocked || []).includes(cellKey(c.a, c.b))) { toast("Lì c'è un ostacolo: scegli un'altra casella", "info"); return; }
+        }
+        try {
+          const existing = [...T.view.tokens.values()].find((t) => t.kind === "pc" && t.owner_id === member.user_id);
+          const ch = member.character_id ? store.characters.get(member.character_id) : null;
+          if (existing) await must(sb.from("tokens").update({ x: p.x, y: p.y, hidden: false }).eq("id", existing.id));
+          else {
+            const used = new Set([...T.view.tokens.values()].map((t) => t.color));
+            const row = await must(sb.from("tokens").insert({
+              game_id: T.gameId, map_id: map.id, kind: "pc", name: member.character_name || member.display_name, owner_id: member.user_id,
+              x: p.x, y: p.y, size: 1, color: COLORS.find((c) => !used.has(c)) || COLORS[2], image: ch?.portrait || null,
+            }).select().single());
+            T.view.upsertToken(row); renderList();
+          }
+          T.view.addPing(p.x, p.y, "#7fd6ff");
+          done("placed");
+        } catch (e) { toast(e.message, "error"); }
+      },
+    };
+    renderTools();
+  });
 }
 
 async function patchToken(t, patch) {
@@ -312,12 +486,20 @@ function renderTokenBar(t) {
     acts.push(h("button", { class: "btn btn-sm btn-danger", title: "Elimina", html: icon("x"), onclick: () => deleteToken(t) }));
   }
   const note = t.kind === "note" && t.state?.text ? h("div", { class: "token-note" }, t.state.text) : null;
+  let moveLine = null;
+  const map = T.maps.get(T.viewMapId);
+  if (map && ["pc", "npc", "monster"].includes(t.kind)) {
+    const g = gridOf(map), sp = tokenSpeed(t);
+    const info = moveInfo(t);
+    moveLine = h("div", { class: "small muted" }, `🦶 Velocità ${fmtMove(sp, g)}` +
+      (info ? (info.reason ? ` · ${info.reason}` : ` · puoi muoverti ancora di ${fmtMove(info.left, g)}`) : ""));
+  }
   bar.replaceChildren(
     h("div", { class: "token-bar-head" },
       h("strong", {}, t.name || KINDS[t.kind]),
       h("span", { class: "muted small" }, KINDS[t.kind] + (t.owner_id ? " · " + memberName(t.owner_id) : "") + (t.hidden ? " · nascosto" : "") + (t.locked ? " · bloccato" : "")),
       h("button", { class: "icon-btn", html: icon("x"), onclick: () => T.view.select(null) })),
-    ...[note, acts.length ? h("div", { class: "row-btns" }, acts) : null].filter(Boolean));
+    ...[note, moveLine, acts.length ? h("div", { class: "row-btns" }, acts) : null].filter(Boolean));
   bar.hidden = false;
 }
 
@@ -575,6 +757,7 @@ function tokenForm(t = {}) {
     locked: h("input", { type: "checkbox", checked: !!t.locked }),
     text: h("textarea", { rows: 2, maxlength: 400, placeholder: "Testo visibile cliccando la nota" }, t.state?.text || ""),
     file: h("input", { type: "file", accept: "image/*" }),
+    speed: h("input", { type: "number", min: 0, max: 90, step: 1.5, value: t.speed != null ? Math.round(t.speed * 0.3 * 10) / 10 : "", placeholder: "dalla scheda, altrimenti 9" }),
   };
   let color = t.color || COLORS[0];
   const paint = () => f.color.replaceChildren(...COLORS.map((c) => h("button", { type: "button", class: `swatch ${c === color ? "active" : ""}`, style: { background: c }, onclick: () => { color = c; paint(); } })));
@@ -582,7 +765,11 @@ function tokenForm(t = {}) {
   const prev = h("div", { class: "tok-preview" });
   const showPrev = () => prev.replaceChildren(image ? h("img", { src: image, alt: "" }) : h("span", { class: "muted small" }, "nessuna immagine"));
   showPrev();
-  f.file.onchange = async () => { if (f.file.files[0]) { try { image = await resizeImage(f.file.files[0], 128); showPrev(); } catch (e) { toast(e.message, "error"); } } };
+  f.file.onchange = async () => { if (f.file.files[0]) { try { image = await resizeImage(f.file.files[0], 200); showPrev(); } catch (e) { toast(e.message, "error"); } } };
+  const gallery = h("div", { class: "art-gallery" }, MONSTER_ART.map((a) => h("button", {
+    type: "button", class: "art-pick", title: a.name,
+    onclick: () => { image = a.src; showPrev(); if (!f.name.value.trim()) f.name.value = a.name; },
+  }, h("img", { src: a.src, alt: a.name, loading: "lazy" }))));
   const textRow = h("label", {}, "Testo della nota", f.text);
   const syncKind = () => { textRow.hidden = f.kind.value !== "note"; };
   f.kind.onchange = () => { syncKind(); if (!t.id) f.hidden.checked = f.kind.value === "trap"; };
@@ -594,14 +781,17 @@ function tokenForm(t = {}) {
       h("div", { class: "label" }, "Colore del bordo"), f.color,
       textRow),
     h("div", {},
-      h("label", {}, "Chi può muoverlo", f.owner),
+      h("label", {}, "Chi può muoverlo (solo per i personaggi giocanti)", f.owner),
+      h("label", {}, "Velocità in metri (1,5 m = 1 casella)", f.speed),
       h("label", { class: "check" }, f.hidden, " Nascosto ai giocatori (non viene nemmeno inviato)"),
       h("label", { class: "check" }, f.locked, " Bloccato (il giocatore non può muoverlo)"),
-      h("label", {}, "Immagine / ritratto (facoltativa)", f.file), prev,
+      h("div", { class: "label" }, "Illustrazione pronta"), gallery,
+      h("label", {}, "…oppure carica un'immagine tua", f.file), prev,
       image ? h("button", { type: "button", class: "btn btn-sm btn-ghost", onclick: () => { image = null; showPrev(); } }, "Rimuovi immagine") : null));
   const values = () => ({
     kind: f.kind.value, name: f.name.value.trim(), size: Number(f.size.value), color, image,
-    owner_id: f.owner.value || null, hidden: f.hidden.checked, locked: f.locked.checked,
+    owner_id: f.kind.value === "pc" ? (f.owner.value || null) : null, hidden: f.hidden.checked, locked: f.locked.checked,
+    speed: f.speed.value === "" ? null : Math.max(0, Math.min(300, Math.round(Number(String(f.speed.value).replace(",", ".")) / 0.3))),
     state: { ...(t.state || {}), ...(f.kind.value === "note" ? { text: f.text.value.trim() } : {}) },
   });
   return { body, values };

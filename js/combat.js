@@ -381,3 +381,8 @@ export async function addToCombat({ name, kind = "monster", token_id = null, ini
   C.stats.set(r.id, s); render();
   return r;
 }
+export function combatantOfToken(tokenId) {
+  if (!tokenId) return null;
+  for (const c of C.list.values()) if (c.token_id === tokenId) return c;
+  return null;
+}

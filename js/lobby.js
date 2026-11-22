@@ -89,6 +89,9 @@ export async function renderLobby(app, { joinCode } = {}) {
 
   root.append(
     h("header", { class: "lobby-hero" },
+      h("div", { class: "lobby-tools" },
+        h("button", { class: "btn btn-sm", html: `${icon("help")} Guida`, onclick: () => import("./guide.js").then((m) => m.openGuide()) }),
+        h("button", { class: "btn btn-sm", html: `${icon("sliders")} Opzioni`, onclick: () => import("./options.js").then((m) => m.openOptions()) })),
       h("div", { class: "crest" }),
       h("h1", { class: "title-font" }, "D&D Virtual Adventure"),
       h("p", { class: "tagline" }, "Il vostro tavolo da gioco, ovunque voi siate.")),
