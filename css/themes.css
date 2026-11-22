@@ -124,3 +124,4 @@ input:not([type=checkbox]):not([type=range]):not([type=file]), select, textarea 
 [data-theme=classico][data-mode=light] .topbar-title strong { color: #fff3dc; }
 [data-theme=classico][data-mode=light] .topbar .btn:not(.btn-gold):not(.btn-primary) { color: var(--text); }
 [data-mode=light] .map-badge.live { color: #2f5a1a; }
+[data-theme=moderno] .srd-card { background: var(--stone-3); color: var(--text); border-color: var(--line); }

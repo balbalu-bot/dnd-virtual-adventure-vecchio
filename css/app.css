@@ -842,7 +842,7 @@ body.map-full .stage-channel { padding-top: .2em; padding-bottom: .2em; font-siz
 .art-pick img { width: 100%; height: 100%; display: block; }
 .tok-preview img { border-radius: 50%; }
 .srd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: .5em; max-height: 60vh; overflow: auto; }
-.srd-card { display: flex; flex-direction: column; align-items: center; gap: .2em; padding: .5em .3em; border-radius: 10px; border: 2px solid var(--line); background: rgba(0,0,0,.2); color: var(--text); cursor: pointer; font: inherit; text-align: center; }
+.srd-card { display: flex; flex-direction: column; align-items: center; gap: .2em; padding: .5em .3em; border-radius: 10px; border: 2px solid rgba(90,60,20,.35); background: rgba(255,255,255,.35); color: var(--ink); cursor: pointer; font: inherit; text-align: center; }
 .srd-card img { width: 76px; height: 76px; border-radius: 50%; border: 3px solid #6a2a1a; }
 .srd-card.on { border-color: var(--gold); background: rgba(212,162,76,.16); box-shadow: 0 0 0 1px var(--bronze); }
 .srd-card strong { font-size: .9rem; line-height: 1.1; }
