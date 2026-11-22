@@ -1,6 +1,6 @@
 // Service worker minimale: rende l'app installabile e veloce da riaprire.
 // Il gioco vero (chat, voce, video) richiede sempre la connessione.
-const VERSION = "dndva-v5.0.0";
+const VERSION = "dndva-v6.0.0";
 const SHELL = [
   "./", "index.html", "config.js", "css/app.css", "css/themes.css", "manifest.webmanifest",
   "js/main.js", "js/ui.js", "js/store.js", "js/supabase.js", "js/lobby.js", "js/characters.js",

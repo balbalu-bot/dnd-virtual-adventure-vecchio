@@ -27,7 +27,7 @@ export function openInviteModal(game) {
           class: "btn", html: `${icon("share")} Condividi…`,
           onclick: () => navigator.share({ title: "D&D Virtual Adventure", text, url: link }).catch(() => {}),
         }) : null),
-      h("p", { class: "muted small" }, "Solo chi conosce il codice può chiedere di entrare. Dal pannello DM puoi chiudere la stanza, approvare gli ingressi o rigenerare il codice.")),
+      h("p", { class: "muted small" }, "Manda il codice SOLO agli amici che giocano. Chi lo usa può solo chiedere di entrare: decidi tu. Se il codice finisce in giro, rigeneralo da Strumenti DM → Sala.")),
     actions: [{ label: "Fatto", primary: true }],
   });
 }
@@ -111,15 +111,16 @@ export async function renderLobby(app, { joinCode } = {}) {
           class: "btn btn-big", html: `${icon("key")} Entra con un codice <small>come giocatore</small>`,
           onclick: () => { const n = requireName(nameInput); if (n) openJoin(n, ""); },
         }),
-        installButton()),
+        installButton(),
+        h("p", { class: "safety-note" }, "👨‍👩‍👧 Gioco pensato per un gruppo privato di amici. Se a giocare sono ragazzi minorenni, va usato con la presenza di un adulto. Non condividete il codice fuori dal gruppo e non scrivete in chat dati personali (indirizzo, telefono, scuola).")),
       h("section", { class: "parchment card card-wide" },
         h("h2", {}, "Le tue partite"), gamesBox,
         h("div", { class: "row-btns", style: { marginTop: ".8em" } },
           h("button", { class: "btn btn-sm btn-ghost", html: `${icon("download")} Importa una campagna (file JSON)`, onclick: () => importDialog(nameInput) })))),
     h("footer", { class: "lobby-foot" },
       h("p", {}, "Progetto amatoriale non ufficiale, non affiliato a Wizards of the Coast. ",
-        "Le regole di gioco usate nelle prossime fasi proverranno dal System Reference Document 5.1 (CC BY 4.0)."),
-      h("p", {}, "Funziona da browser su PC, tablet, Android e iPhone. Serve il permesso per microfono e videocamera.")));
+        "Le regole di gioco provengono dal System Reference Document 5.1 (CC BY 4.0)."),
+      h("p", {}, "Funziona da browser su PC, tablet, Android e iPhone. Serve il permesso per il microfono; la videocamera è facoltativa e resta spenta finché non la accendi. Audio e video non vengono mai registrati.")));
 
   loadMyGames(gamesBox);
 
@@ -250,13 +251,12 @@ function importDialog(nameInput) {
 function openCreate(name) {
   const gname = h("input", { maxlength: 80, placeholder: "es. La Miniera Perduta" });
   const maxP = h("select", {}, [2, 3, 4, 5, 6, 7, 8, 10, 12].map((n) => h("option", { value: n, selected: n === 8 }, `${n} partecipanti (DM incluso)`)));
-  const appr = h("input", { type: "checkbox" });
   modal({
     title: "Nuova partita",
     body: h("div", {},
       h("label", {}, "Nome della partita / campagna", gname),
       h("label", {}, "Numero massimo di partecipanti", maxP),
-      h("label", { class: "check" }, appr, " Approvo io ogni nuovo ingresso (sala d'attesa)"),
+      h("p", { class: "small" }, "🔐 Partita privata: chi usa il codice entra solo dopo la tua approvazione. Quando il gruppo è completo chiudi la stanza da Strumenti DM → Sala."),
       h("p", { class: "muted small" }, "Sarai il Dungeon Master: avrai il controllo della partita. Potrai trasferire il ruolo a un altro partecipante.")),
     actions: [{ label: "Annulla" }, {
       label: "Crea partita", primary: true,
@@ -265,7 +265,7 @@ function openCreate(name) {
         const res = await rpc("create_game", {
           p_name: gname.value.trim(), p_display_name: name,
           p_character_id: loadPref("characterId", null), p_max_players: parseInt(maxP.value, 10),
-          p_require_approval: appr.checked,
+          p_require_approval: true,
         });
         openInviteModal({ name: res.name, invite_code: res.invite_code });
         navigate(`#/game/${res.game_id}`);

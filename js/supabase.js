@@ -40,6 +40,8 @@ function cleanError(msg = "") {
 export async function rpc(name, args = {}) {
   const { data, error } = await sb.rpc(name, args);
   if (error) throw new Error(cleanError(error.message));
+  // alcune funzioni restituiscono l'errore invece di sollevarlo (così i tentativi falliti restano contati)
+  if (data && typeof data === "object" && !Array.isArray(data) && typeof data.error === "string") throw new Error(data.error);
   return data;
 }
 

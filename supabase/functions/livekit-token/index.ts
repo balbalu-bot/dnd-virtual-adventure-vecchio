@@ -96,11 +96,12 @@ Deno.serve(async (req: Request) => {
         roomJoin: true,
         canPublish: true,
         canSubscribe: true,
-        canPublishData: true,
+        canPublishData: false,          // l'app non usa messaggi via audio/video: niente canale dati
         canUpdateOwnMetadata: false,
         canPublishSources: ["microphone", "camera"],
       },
-    }, 6 * 60 * 60);
+    }, 10 * 60);  // 10 minuti: serve solo per collegarsi. Un escluso non può riusarlo a lungo,
+                  // e "livekit-guard" scollega comunque chi non è più membro attivo.
 
     return json({ token, url: LK_URL, room });
   } catch (e) {

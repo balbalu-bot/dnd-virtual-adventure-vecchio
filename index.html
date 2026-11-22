@@ -2,6 +2,9 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
+  <!-- Sicurezza: il browser carica codice, immagini e connessioni SOLO da questo sito, Supabase e LiveKit -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.livekit.cloud wss://*.livekit.cloud; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14100c">
   <meta name="description" content="D&D Virtual Adventure — tavolo virtuale multiplayer con voce, ricetrasmittente e video">

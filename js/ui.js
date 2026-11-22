@@ -232,3 +232,6 @@ export function avatar(name, portrait, cls = "") {
   if (portrait) return h("img", { class: `avatar ${cls}`, src: portrait, alt: "" });
   return h("span", { class: `avatar avatar-txt ${cls}` }, initials(name));
 }
+
+/** Testo sicuro da inserire in HTML (nomi, messaggi…) */
+export function escapeHtml(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }

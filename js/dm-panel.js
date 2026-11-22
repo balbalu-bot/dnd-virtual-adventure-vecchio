@@ -28,7 +28,9 @@ export async function banMember(userId) {
   const m = store.members.get(userId);
   if (!(await confirmDialog(`Allontanare ${m?.display_name} dalla partita? Non potrà rientrare finché non lo riammetti.`, { danger: true, okLabel: "Allontana" }))) return;
   await rpc("set_member_status", { p_game: store.game.id, p_user: userId, p_status: "banned" });
+  // doppia sicurezza: il database chiede già al server di scollegarlo; qui lo chiede anche il DM
   callFunction("livekit-moderate", { game_id: store.game.id, action: "kick", target: userId }).catch(() => {});
+  callFunction("livekit-guard", { game_id: store.game.id }).catch(() => {});
   toast(`${m?.display_name} è stato allontanato`, "ok");
 }
 
@@ -74,7 +76,18 @@ export function roomBody() {
             },
           }, "Rigenera codice")),
         toggle("Stanza chiusa", "locked", "nessun nuovo ingresso"),
-        toggle("Approvo io ogni nuovo ingresso", "require_approval", "sala d'attesa"),
+        h("p", { class: "small muted" }, "🔐 Ogni nuovo ingresso aspetta SEMPRE la tua approvazione (regola del server). Quando sono entrati tutti, chiudi la stanza: nessun estraneo potrà più chiedere di entrare."),
+        h("label", { class: "check" },
+          h("input", { type: "checkbox", checked: g.settings?.private_players !== false, onchange: async (e) => {
+            try { await updateGame({ settings: { ...(store.game.settings || {}), private_players: e.target.checked } }); toast(e.target.checked ? "Messaggi e canali privati tra giocatori permessi" : "Ora ogni comunicazione privata deve includere te", "ok"); }
+            catch (err) { toast(err.message, "error"); e.target.checked = !e.target.checked; }
+          } }), " Messaggi e canali vocali privati tra giocatori", h("small", { class: "muted" }, " — se spento, nelle comunicazioni private ci sei sempre tu")),
+        h("div", { class: "row-btns" },
+          h("button", { class: "btn btn-sm btn-danger", title: "Spegne sul server il microfono di tutti i giocatori collegati", onclick: async () => {
+            const ids = [...store.members.values()].filter((m) => m.status === "active" && m.user_id !== store.user.id).map((m) => m.user_id);
+            await Promise.all(ids.map((id) => callFunction("livekit-moderate", { game_id: store.game.id, action: "mute", target: id }).catch(() => {})));
+            toast("Microfoni di tutti spenti", "ok");
+          } }, "🔇 Silenzia tutti i microfoni")),
         toggle("Sessione in pausa", "paused", "tutti vedono l'avviso di pausa")),
 
       pending.length ? h("section", {},

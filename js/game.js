@@ -1,5 +1,5 @@
 // Schermata di gioco: layout, partecipanti, canali, comandi vocali, tempo reale
-import { sb, rpc, must } from "./supabase.js";
+import { sb, rpc, must, callFunction } from "./supabase.js";
 import { store, emit, on, isDM, memberName } from "./store.js";
 import { h, icon, toast, modal, avatar, isTypingTarget, beep, formatCode, isMobile, savePref, loadPref, confirmDialog } from "./ui.js";
 import {
@@ -54,6 +54,8 @@ export async function enterGame(app, gameId) {
   initAudio({ sendBroadcast });
   applyMusicState(store.game.settings?.music);
   if (isDM() && Number(store.game.settings?.retention_days) > 0) rpc("purge_messages", { p_game: store.game.id, p_all: false }).catch(() => {});
+  // il DM, entrando, fa controllare al server che in audio/video ci siano solo membri attivi
+  if (isDM()) callFunction("livekit-guard", { game_id: store.game.id }).catch(() => {});
   touch();
   heartbeat = setInterval(touch, 60000);
   installKeys();
@@ -144,7 +146,7 @@ function touch() {
 
 function subscribeRealtime(gid) {
   wasSubscribed = false;
-  rt = sb.channel(`game-${gid}`)
+  rt = sb.channel(`game-${gid}`, { config: { private: true } }) // solo i membri attivi (regole sul server)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `game_id=eq.${gid}` }, (p) => onMessage(p.new))
     .on("postgres_changes", { event: "*", schema: "public", table: "members", filter: `game_id=eq.${gid}` }, (p) => onMember(p))
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${gid}` }, (p) => onGame(p.new))
@@ -291,11 +293,12 @@ function buildLayout(app) {
   els.syncDot = h("span", { class: "sync-dot", dataset: { state: "warn" } });
   els.voiceChip = h("span", { class: "voice-chip" });
   els.txChip = h("span", { class: "tx-chip", hidden: true, html: `${icon("radio")} IN TRASMISSIONE` });
+  els.camChip = h("button", { class: "cam-chip", hidden: true, title: "La tua videocamera è accesa: tocca per spegnerla", onclick: () => setCamera(false), html: `${icon("cam")} VIDEOCAMERA ACCESA` });
   els.dmBtn = h("button", { class: "btn btn-sm btn-gold", html: `${icon("crown")} <span>Strumenti DM</span>`, onclick: () => openDmPanel() });
   const topbar = h("header", { class: "topbar" },
     h("button", { class: "icon-btn", title: "Torna alla schermata iniziale", html: icon("back"), onclick: () => navigate("#/") }),
     els.title,
-    h("div", { class: "topbar-status" }, els.syncDot, els.voiceChip, els.txChip),
+    h("div", { class: "topbar-status" }, els.syncDot, els.voiceChip, els.txChip, els.camChip),
     h("div", { class: "topbar-actions" },
       els.dmBtn,
       h("button", { class: "btn btn-sm", html: `${icon("share")} <span>Invita</span>`, onclick: () => openInviteModal(store.game) }),
@@ -507,6 +510,7 @@ function renderControls() {
   root.classList.toggle("in-private", priv);
   root.classList.toggle("transmitting", st.transmitting);
   els.txChip.hidden = !st.transmitting;
+  els.camChip.hidden = !st.camOn;
   els.txChip.classList.toggle("private", priv);
 
   // indicatore canale anche sopra il tavolo
@@ -656,19 +660,19 @@ function removeKeys() {
 function showJoinOverlay() {
   if (document.querySelector(".join-overlay")) return;
   const mic = h("input", { type: "checkbox", checked: loadPref("joinMic", true) });
-  const cam = h("input", { type: "checkbox", checked: loadPref("joinCam", !voice.state.audioOnly) });
+  const cam = h("input", { type: "checkbox", checked: false }); // videocamera SEMPRE spenta all'ingresso: si accende solo di proposito
   const ov = h("div", { class: "join-overlay" },
     h("div", { class: "parchment join-card" },
       h("h2", { class: "title-font" }, store.game.name),
-      h("p", {}, "Stai per sederti al tavolo. Il browser ti chiederà il permesso per microfono e videocamera."),
+      h("p", {}, "Stai per sederti al tavolo. Il browser ti chiederà il permesso per il microfono. Audio e video non vengono mai registrati."),
       h("label", { class: "check" }, mic, " Microfono (consigliato: anche in modalità PTT)"),
-      h("label", { class: "check" }, cam, " Videocamera"),
+      h("label", { class: "check" }, cam, " Accendi anche la videocamera (di solito non serve)"),
       h("p", { class: "muted small" }, "Consiglio: usa cuffie o auricolari per evitare l'eco."),
       h("div", { class: "row-btns center" },
         h("button", {
           class: "btn btn-primary btn-big", html: `${icon("door")} Entra al tavolo`,
           onclick: async () => {
-            savePref("joinMic", mic.checked); savePref("joinCam", cam.checked);
+            savePref("joinMic", mic.checked);
             beep("tx-off"); // sblocca l'audio su iPhone (serve un tocco)
             ov.remove();
             const ok = await connectVoice(store.game.id, { mic: mic.checked, cam: cam.checked });

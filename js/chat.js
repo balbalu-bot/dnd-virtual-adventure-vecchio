@@ -3,7 +3,7 @@
 // messaggio privato non viene nemmeno inviato a chi non è destinatario.
 import { sb, must } from "./supabase.js";
 import { store, on, emit, memberName } from "./store.js";
-import { h, icon, toast, fmtTime, beep, modal, isMobile } from "./ui.js";
+import { h, icon, toast, fmtTime, beep, modal, isMobile, escapeHtml } from "./ui.js";
 
 let root, list, input, target, filterSel, counter, gameId;
 const messages = new Map(); // id -> riga
@@ -176,7 +176,7 @@ function renderMessage(m) {
   return h("div", { class: `msg ${m.sender_id === me ? "msg-mine" : ""} ${priv ? "msg-private" : ""}` },
     h("div", { class: "msg-head" },
       h("strong", { class: sender?.role === "dm" ? "is-dm" : "" }, m.sender_name || memberName(m.sender_id)),
-      priv ? h("span", { class: "msg-badge", html: `${icon("lock")} ${describeRecipients(m)}` }) : null,
+      priv ? h("span", { class: "msg-badge", html: `${icon("lock")} ${escapeHtml(describeRecipients(m))}` }) : null,
       h("span", { class: "msg-time" }, fmtTime(m.created_at))),
     h("div", { class: "msg-body" }, m.body));
 }

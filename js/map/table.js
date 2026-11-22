@@ -330,7 +330,7 @@ function renderList() {
 async function moveToken(t, x, y, prev, path) {
   try {
     const res = await rpc("move_token", { p_token: t.id, p_x: Math.round(x * 10) / 10, p_y: Math.round(y * 10) / 10, p_path: path || null });
-    T.sendBroadcast({ t: "drag", map: T.viewMapId, id: t.id, x, y });
+    if (!t.hidden) T.sendBroadcast({ t: "drag", map: T.viewMapId, id: t.id, x, y });
     if (res && res.left != null && !combatTurnOf(t)) {
       const old = T.moveLocal.get(t.id);
       const at = old && Date.now() - old.at < 6000 ? old.at : Date.now();

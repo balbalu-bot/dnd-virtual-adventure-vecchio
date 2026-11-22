@@ -334,7 +334,7 @@ export async function dmPlayFileSfx(path) { playFile(path, { asSfx: true }); A.s
 export function audioBroadcast(msg) {
   if (msg?.t === "sfx" || msg?.t === "sfx-file") { A.wantSound = true; setTimeout(updateUnlockBanner, 200); }
   if (msg?.t === "sfx") playSfxLocal(msg.id);
-  if (msg?.t === "sfx-file" && !prefs.off) playFile(msg.path, { asSfx: true });
+  if (msg?.t === "sfx-file" && !prefs.off && typeof msg.path === "string" && store.game && msg.path.startsWith(store.game.id + "/audio/")) playFile(msg.path, { asSfx: true });
 }
 
 export function initAudio({ sendBroadcast }) { A.sendBroadcast = sendBroadcast; }

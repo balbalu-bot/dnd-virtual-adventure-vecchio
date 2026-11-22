@@ -225,6 +225,21 @@ La prova **6** è quella che conferma la privacy reale dei canali privati: falla
 
 **Guida e glossario**: pulsante **?** in alto. *Come si gioca* (giocatori e DM) e *Glossario dei termini* con ricerca: CA, CD, PF, vantaggio, tiro salvezza, iniziativa, PTT, nebbia, ostacoli… L'elenco completo è anche in `docs/GLOSSARIO.md`.
 
+## Aggiornamento di sicurezza (gruppo privato, anche per minorenni)
+
+Il gioco è pensato per un gruppo privato di amici. **Se giocano ragazzi minorenni, va usato con la presenza di un adulto.**
+Tutti i dettagli (audit, correzioni, test) sono in `docs/SICUREZZA.md`. Installazione in breve:
+
+1. Supabase → SQL Editor → incolla `supabase/schema-sicurezza.sql` → **Run**.
+2. Supabase → Edge Functions → **Deploy a new function** chiamata `livekit-guard` con il codice di `supabase/functions/livekit-guard/index.ts`, poi disattiva **Verify JWT**.
+3. Aggiorna il codice della funzione `livekit-token` con il nuovo file e premi Deploy.
+4. LiveKit Cloud → Settings → Webhooks → aggiungi `https://iorzwlodowfixktsjxgb.supabase.co/functions/v1/livekit-guard`.
+5. Carica lo ZIP su GitHub e ricarica il sito.
+6. Quando hai verificato che tutto funziona: Supabase → Realtime → Settings → disattiva **Allow public access**.
+7. GitHub → Settings → Emails → **Keep my email addresses private**.
+
+Cosa cambia per chi gioca: ogni nuovo ingresso aspetta sempre l'approvazione del DM; la videocamera è spenta all'ingresso e, se accesa, compare il bollino rosso **VIDEOCAMERA ACCESA**; il DM ha "Silenzia tutti i microfoni" e può limitare messaggi e canali privati tra giocatori; chi viene allontanato viene scollegato anche da audio e video; i messaggi delle nuove partite si cancellano dopo 30 giorni.
+
 ## Limiti dei servizi gratuiti (da conoscere)
 
 **LiveKit Cloud — piano Build (gratuito)**

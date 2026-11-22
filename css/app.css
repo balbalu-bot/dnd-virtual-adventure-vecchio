@@ -856,3 +856,8 @@ body.map-full .stage-channel { padding-top: .2em; padding-bottom: .2em; font-siz
 .gloss-item { padding: .45em 0; border-bottom: 1px solid rgba(90,60,20,.25); }
 .gloss dt { font-weight: 700; font-family: var(--title); }
 .gloss dd { margin: .15em 0 0; }
+/* ---------------------------------------------------------- sicurezza */
+.cam-chip { display: inline-flex; align-items: center; gap: .3em; padding: .25em .7em; border-radius: 999px; border: 2px solid #ff4d3d; background: #b3261e; color: #fff; font: inherit; font-weight: 800; font-size: .8rem; letter-spacing: .04em; cursor: pointer; animation: cam-blink 1.4s ease-in-out infinite; }
+.cam-chip svg { width: 15px; height: 15px; }
+@keyframes cam-blink { 50% { box-shadow: 0 0 0 5px rgba(255,77,61,.25); } }
+.safety-note { margin: .8em 0 0; padding: .6em .8em; border-radius: 8px; border: 1px solid rgba(179,38,30,.45); background: rgba(179,38,30,.08); font-size: .92rem; }
